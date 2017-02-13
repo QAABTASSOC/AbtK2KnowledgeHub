@@ -3,16 +3,13 @@ using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Taxonomy;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace AbtK2KnowledgeHub_OneTime
 {
@@ -23,7 +20,19 @@ namespace AbtK2KnowledgeHub_OneTime
         string emailId = Helper.GetAppSettingValue(Constants.KnowledgeHubEmailId);
         string password = Helper.GetAppSettingValue(Constants.KnowledgeHubPassword);
         List<Projects> ProjetcsFromDB= new List<Projects>();
-        
+
+        private static bool isDoneExecuting = false;
+
+        //path for the logs to be written
+        private static string logPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                                 + @"\QA_Development\";
+
+        //contains all of the valid formats for the test
+        public static HashSet<string> extensions = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        { ".WPD",".wpd",".doc", ".docx", ".xlsx", ".xls",".pdf",".txt", ".pptx",".ppt", ".jpg", ".zip",".png",".rar" };
+
+        public static Dictionary<string, string> ignoredRecords = new Dictionary<string, string>();
+
 
 
         static void Main(string[] args)
@@ -161,7 +170,79 @@ namespace AbtK2KnowledgeHub_OneTime
         }
 
 
+        public static void LogNDisplay(string action, long elapsedTipe)
+        {
+            using (StreamWriter w = System.IO.File.AppendText(logPath + "PerformanceTestLog.txt"))
+            {
+                Log(action + ": " + TimeSpan.FromMilliseconds(elapsedTipe).ToString(), w);
+            }
+            using (StreamReader r = System.IO.File.OpenText(logPath + "PerformanceTestLog.txt"))
+            {
+                DumpLog(r);
+            }
+        }
+        /// <summary>
+        ///  log and Display
+        /// </summary>
+        /// <param name="action">action to be logged i.e (Move, Delete, Crete, etc..)</param>
+        public static void LogNDisplay(string action)
+        {
+            using (StreamWriter w = System.IO.File.AppendText(logPath + "KH_FILES_AND_PATHS_LOG.txt"))
+            {
+                Log(action, w);
+            }
+            //using (StreamReader r = File.OpenText(logPath + "KH_FILES_AND_PATHS_LOG.txt"))
+            //{
+            //    DumpLog(r);
+            //}
+        }
+        public static void CleanLogNDisplay(string action)
+        {
+            using (StreamWriter w = System.IO.File.AppendText(logPath + "KH_FILES_AND_PATHS_LOG.txt"))
+            {
+                CleanLog(action, w);
+            }
+            //using (StreamReader r = File.OpenText(logPath + "KH_FILES_AND_PATHS_LOG.txt"))
+            //{
+            //    DumpLog(r);
+            //}
+        }
+        /// <summary>
+        /// inserts log messages
+        /// </summary>
+        /// <param name="logMessage"></param>
+        /// <param name="w"></param>
+        public static void Log(string logMessage, TextWriter w)
+        {
+            w.Write("\r\nEntry at : ");
+            w.WriteLine("{0}", DateTime.Now.ToString());
+            // w.WriteLine("  ");
+            w.WriteLine("{0}", logMessage);
+            Console.WriteLine(logMessage);
+            //  Console.Clear();
+        }
 
+        public static void CleanLog(string logMessage, TextWriter w)
+        {
+            w.WriteLine("{0}\n", logMessage);
+            Console.WriteLine(logMessage);
+            //  Console.Clear();
+        }
+        /// <summary>
+        /// display the log to standar output
+        /// </summary>
+        /// <param name="r"></param>
+        public static void DumpLog(StreamReader r)
+        {
+            string line;
+            while ((line = r.ReadLine()) != null)
+            {
+                Console.WriteLine(line);
+            }
+        }
+
+        //DEEPA'S Code Bellow
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
         public void ImportProjects()
         {
             AbKLog log = Helper.ConstructLog(Enums.MigrationModule.Project, Enums.LogType.Info, correlationId, Constants.TranformAndPush + " for Project", DateTime.UtcNow);
