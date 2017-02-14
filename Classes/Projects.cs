@@ -32,7 +32,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Field : ProjectOriginalEndDate
         /// SharePoint Type : Date and Time
         /// </summary>
-        public DateTime OriginalEndDate { get; set; }
+        public DateTime? OriginalEndDate { get; set; }
         /// <summary>
         /// SharePoint Field : Title
         /// SharePoint Type : Single Line of Text
@@ -67,7 +67,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Field : ProjectCurrentFunding
         /// SharePoint Type : Currency
         /// </summary>
-        public decimal CurrentFunding { get; set; }
+        public decimal? CurrentFunding { get; set; }
         /// <summary>
         /// SharePoint Field : ProjectAdditionalReference
         /// SharePoint Type : Multiple Line of Text
@@ -78,7 +78,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Type : Yes/No
         /// </summary>
         public bool? IsGoodReference { get; set; }
-
+        public string IsGoodReferenceText { get; set; }
         /// <summary>
         /// SharePoint Field: BS_ProjectDirector
         /// SharePoint Old Data Field: ProjectDirectorOld
@@ -86,7 +86,12 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Type : Person or Group
         /// </summary>
         public string ProjectDirector { get; set; }
-
+        /// <summary>
+        /// SharePoint Field: BS_ProjectDirectorName
+        /// Data: Email Id will come as data
+        /// SharePoint Type : Person or Group
+        /// </summary>
+        public string ProjectDirectorName { get; set; }
         /// <summary>
         /// SharePoint Field: ProjectTechnicalOfficer
         /// SharePoint Old Data Field: ProjectTechnicalOfficerOld
@@ -94,6 +99,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Type : Person or Group
         /// </summary>        
         public string TechnicalOfficer { get; set; }
+        public string TechnicalOfficerName { get; set; }
         /// <summary>
         /// SharePoint: ProjectStatus
         /// SharePoint Type : Single Line of Text
@@ -114,6 +120,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Type : Yes/No
         /// </summary>
         public bool IsPrime { get; set; }
+        public string IsPrimeText { get; set; }
         /// <summary>
         /// SharePoint Field : ProjectClient
         /// SharePoint Type : Single Line of Text
@@ -178,11 +185,14 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Field : ParentProject
         /// SharePoint Type : Lookup (self)
         /// </summary>
-        public int ParentProject { get; set; }
+        public int? ParentProject { get; set; }
         /// <summary>
         /// SharePoint Field : Proposal
         /// SharePoint Type : Single Line of Text
         /// </summary>
-        public int ProposalID { get; set; }
+        public int? ProposalID { get; set; }
+        public decimal? AwardAmount{ get; set; }
+        public decimal? FundedAmount { get; set; }
+        public int? OracleProposalNumber { get; set; }
     }
 }

@@ -19,8 +19,7 @@ namespace AbtK2KnowledgeHub_OneTime
         string knowledgeHubWebUrl = Helper.GetAppSettingValue(Constants.KnowledgeHubSiteUrlKey);
         string emailId = Helper.GetAppSettingValue(Constants.KnowledgeHubEmailId);
         string password = Helper.GetAppSettingValue(Constants.KnowledgeHubPassword);
-        List<Projects> ProjetcsFromDB= new List<Projects>();
-
+      
         private static bool isDoneExecuting = false;
 
         //path for the logs to be written
@@ -32,7 +31,7 @@ namespace AbtK2KnowledgeHub_OneTime
         { ".WPD",".wpd",".doc", ".docx", ".xlsx", ".xls",".pdf",".txt", ".pptx",".ppt", ".jpg", ".zip",".png",".rar" };
 
         public static Dictionary<string, string> ignoredRecords = new Dictionary<string, string>();
-
+        public static Dictionary<string, Projects> ProjetcsFromDB = new Dictionary<string, Projects>();
 
 
         static void Main(string[] args)
@@ -55,6 +54,8 @@ namespace AbtK2KnowledgeHub_OneTime
              //   program.ImportDescription();
              //   program.ImportDocuments();
              //   program.ApplyMetaDataToDocuments();
+               
+                ExcelReader.ReadConfig("Projects");
                 program.test();
                 Console.WriteLine("Import is complete. Press any key to exit.");
                 Console.ReadKey();
@@ -89,15 +90,17 @@ namespace AbtK2KnowledgeHub_OneTime
                     int count = 0; int i = 0;
                     while (reader.Read())
                     {
+                        string projectNumber = Helper.SafeGetString(reader, "ProjectNumber");
                         Projects thisProject = new Projects();
+
+                        //Project Number
+                        thisProject.ProjectNumber = projectNumber;
+                        // is Active
                         thisProject.IsActive = Helper.SafeGetBool(reader, "IsActive");
                         //Project Name
                         thisProject.ProjectName = Helper.SafeGetString(reader, "ProjectName");
-                        //Project Number
-                        string projectNumber = Helper.SafeGetString(reader, "ProjectNumber");
                         //project ID
                         thisProject.ProjectsID = Helper.SafeGetInt32(reader, "ProjectsID");
-                        thisProject.ProjectNumber= Helper.SafeGetString(reader, "ProjectNumber");
                         //Project Title
                         thisProject.ProjectTitle = Helper.SafeGetString(reader, "ProjectTitle");
                         //Is this project a good reference?
@@ -109,7 +112,7 @@ namespace AbtK2KnowledgeHub_OneTime
                         //Ultimate Client
                         thisProject.UltimateClient = Helper.SafeGetString(reader, "UltimateClient");
                         //Contract Number
-                        thisProject.ContractNumber =  Helper.SafeGetString(reader, "ContractNumber");
+                        thisProject.ContractNumber = Helper.SafeGetString(reader, "ContractNumber");
                         //Additional Reference
                         thisProject.AdditionalReference = Helper.SafeGetString(reader, "AdditionalReference");
                         //Agreement Name 
@@ -125,6 +128,7 @@ namespace AbtK2KnowledgeHub_OneTime
                         //Potential Worth
                         thisProject.PotentialWorth = Helper.SafeGetDecimal(reader, "PotentialWorth");
                         //Award Amount
+                        thisProject.AwardAmount = Helper.SafeGetDecimal(reader, "AwardAmount");
                         //Funded Amount
                         //Division  
                         thisProject.Division = GetDivision(Helper.SafeGetString(reader, "Division"));
@@ -137,9 +141,9 @@ namespace AbtK2KnowledgeHub_OneTime
                         thisProject.TechnicalOfficer = Helper.SafeGetString(reader, "TechnicalOfficer");
                         //Technical Officer Name
                         //Parent Project 
-                        string parentProjectNumber = Helper.SafeGetString(reader, "ParentProjectNumber");                      
+                        string parentProjectNumber = Helper.SafeGetString(reader, "ParentProjectNumber");
                         //Is Active ? (Y / N)  Yes
-                        string Is_Active_String = (bool)thisProject.IsActive? "Yes" : "No";
+                        thisProject.IsPrimeText = (bool)thisProject.IsActive ? "TRUE" : "FALSE";
                         thisProject.InstClient = Helper.SafeGetString(reader, "InstClient");
                         thisProject.FederalAgency = Helper.SafeGetString(reader, "FederalAgency");
                         thisProject.AgreementTrackNumber = Helper.SafeGetDecimal(reader, "AgreementTrackNumber");
@@ -148,22 +152,38 @@ namespace AbtK2KnowledgeHub_OneTime
                         string ProposalOracleNumber = Helper.SafeGetString(reader, "Proposalnumber");
                         string isGoodRef;
                         if (thisProject.IsGoodReference.HasValue)
-                            isGoodRef = (bool)thisProject.IsGoodReference? "Yes" : "No";
+                            isGoodRef = (bool)thisProject.IsGoodReference ? "Yes" : "No";
                         else
                             isGoodRef = "Unknown";
                         thisProject.ProjectComments = Helper.SafeGetString(reader, "ProjectComments");
                         thisProject.ContractValue = Helper.SafeGetDecimal(reader, "ContractValue");
 
-                        //project records from DB
-                        ProjetcsFromDB.Add(thisProject);
+                        //add to index map
+                        if (!ProjetcsFromDB.ContainsKey(projectNumber))
+                        {
+                            ProjetcsFromDB.Add(projectNumber, thisProject);
+                            Projects value = ProjetcsFromDB[projectNumber];
+                            Console.WriteLine(value.ProjectNumber);
+                        }
+                        else
+                        {
+                            // indexFinder.Add(projectNumber, -1);
+                            Program.LogNDisplay("the file: " + projectNumber + " have been previously processed: " + " \n index: " + count);
+                        }
+                    
                     }
                     sqlConnetion.Close();
                 }
-              
-                foreach (var item in ProjetcsFromDB)
+
+                var arrayOfAllKeys = ExcelReader.ExcelProjectsDictionary.Keys.ToArray();
+                foreach (var item in arrayOfAllKeys)
                 {
-                    Console.WriteLine("Project #" + countr +":  " + item.ProjectName);
-                    countr++;
+                    bool PN = ProjetcsFromDB[item].ProjectNumber.Equals(ExcelReader.ExcelProjectsDictionary[item]);
+                    if (PN)
+                    {
+                        Console.WriteLine(countr+ " Project: " + ProjetcsFromDB[item].ProjectNumber + " have been found" );
+                    }
+                   
                 }
                 
             }
@@ -221,7 +241,6 @@ namespace AbtK2KnowledgeHub_OneTime
             Console.WriteLine(logMessage);
             //  Console.Clear();
         }
-
         public static void CleanLog(string logMessage, TextWriter w)
         {
             w.WriteLine("{0}\n", logMessage);
