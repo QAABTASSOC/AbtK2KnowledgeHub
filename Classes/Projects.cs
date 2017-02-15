@@ -119,7 +119,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Field : ProjectIsPrime
         /// SharePoint Type : Yes/No
         /// </summary>
-        public bool IsPrime { get; set; }
+        public bool? IsPrime { get; set; }
         public string IsPrimeText { get; set; }
         /// <summary>
         /// SharePoint Field : ProjectClient
@@ -185,7 +185,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Field : ParentProject
         /// SharePoint Type : Lookup (self)
         /// </summary>
-        public int? ParentProject { get; set; }
+        public string ParentProject { get; set; }
         /// <summary>
         /// SharePoint Field : Proposal
         /// SharePoint Type : Single Line of Text

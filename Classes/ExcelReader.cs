@@ -27,8 +27,19 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         {
             excelApp = new Excel.Application();
             //TO USE EXCEL: PUT THE PATH IN THE LINE BELOW
-            excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\"+fileName+".xlsx", true, true);
-            excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("Sheet1");
+            try
+            {
+                excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\" + fileName + ".xlsx", true, true);
+                excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("Sheet1");
+            }
+            catch (FileNotFoundException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }         
 
             switch (fileName)
             {
@@ -36,6 +47,20 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                     LoadSharePointPojectsExtract();
                     //Projects are done
                     Program.LogNDisplay("\n Finished Loading Projects from Excel \n");
+
+                    break;
+                case "Descriptions":
+                    LoadSharePointPojectsExtract();
+                    //Projects are done
+                    Program.LogNDisplay("\n Finished Loading Projects from Excel \n");
+
+                    break;
+
+                case "Documents":
+                    LoadSharePointPojectsExtract();
+                    //Projects are done
+                    Program.LogNDisplay("\n Finished Loading Projects from Excel \n");
+
                     break;
             }
 
@@ -62,9 +87,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                 {
                     Projects project = new Projects();
                     string projectNumber = (string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value; 
-                                      
-                    if ((string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value != null)
-                    {  
+
                         //load row into memory
                         project.ProjectNumber = (string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value;
                         project.ProjectTitle = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
@@ -72,16 +95,16 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                         project.Division = (string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value;
                         project.Client = (string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value;
                         project.UltimateClient = (string)(excelWorksheet.Cells[row, 6] as Excel.Range).Value;
-                        project.IsPrime = (bool)(excelWorksheet.Cells[row, 7] as Excel.Range).Value;
-                        project.BeginDate = (DateTime)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
-                        project.EndDate = (DateTime)(excelWorksheet.Cells[row, 9] as Excel.Range).Value;
-                        project.OriginalEndDate = (DateTime)(excelWorksheet.Cells[row, 10] as Excel.Range).Value;
+                        project.IsPrime = (bool?)(excelWorksheet.Cells[row, 7] as Excel.Range).Value;
+                        project.BeginDate = (DateTime?)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
+                        project.EndDate = (DateTime?)(excelWorksheet.Cells[row, 9] as Excel.Range).Value;
+                        project.OriginalEndDate = (DateTime?)(excelWorksheet.Cells[row, 10] as Excel.Range).Value;
                         project.ContractNumber = (string)(excelWorksheet.Cells[row, 11] as Excel.Range).Value;
                         project.AdditionalReference = (string)(excelWorksheet.Cells[row, 12] as Excel.Range).Value;
-                        project.PotentialWorth = (Decimal)(excelWorksheet.Cells[row, 13] as Excel.Range).Value;
-                        project.AwardAmount= (Decimal)(excelWorksheet.Cells[row, 14] as Excel.Range).Value;
+                        project.PotentialWorth = (Decimal?)(excelWorksheet.Cells[row, 13] as Excel.Range).Value;
+                        project.AwardAmount= (Decimal?)(excelWorksheet.Cells[row, 14] as Excel.Range).Value;
                         project.ProjectType = (string)(excelWorksheet.Cells[row, 15] as Excel.Range).Value;
-                        project.FundedAmount = (Decimal)(excelWorksheet.Cells[row, 16] as Excel.Range).Value;
+                        project.FundedAmount = (Decimal?)(excelWorksheet.Cells[row, 16] as Excel.Range).Value;
                         project.ProjectDirector = (string)(excelWorksheet.Cells[row, 17] as Excel.Range).Value;
                         project.ProjectDirectorName = (string)(excelWorksheet.Cells[row, 18] as Excel.Range).Value;
                         project.TechnicalOfficer = (string)(excelWorksheet.Cells[row, 19] as Excel.Range).Value;
@@ -89,48 +112,47 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                         project.Practice = (string)(excelWorksheet.Cells[row, 21] as Excel.Range).Value;
                         project.ProjectStatus = (string)(excelWorksheet.Cells[row, 22] as Excel.Range).Value;
                         project.IsGoodReferenceText= (string)(excelWorksheet.Cells[row, 23] as Excel.Range).Value;
-                        project.ParentProject = (int)(excelWorksheet.Cells[row, 24] as Excel.Range).Value;
-                        project.IsActive = (bool)(excelWorksheet.Cells[row, 25] as Excel.Range).Value;
+                        project.ParentProject = (string)(excelWorksheet.Cells[row, 24] as Excel.Range).Value;
+
+                        if (((string)(excelWorksheet.Cells[row, 25] as Excel.Range).Value).ToUpper().Equals("TRUE"))
+                        project.IsActive = true;
+                        else
+                        project.IsActive = false;
+
                         project.ProjectComments = (string)(excelWorksheet.Cells[row, 26] as Excel.Range).Value;
-                        project.AgreementID = (int)(excelWorksheet.Cells[row, 27] as Excel.Range).Value;
+                        project.AgreementID = (int?)(excelWorksheet.Cells[row, 27] as Excel.Range).Value;
                         project.AgreementName = (string)(excelWorksheet.Cells[row, 28] as Excel.Range).Value;
-                        project.AgreementTrackNumber = (int)(excelWorksheet.Cells[row, 29] as Excel.Range).Value;
+                        project.AgreementTrackNumber = Convert.ToInt32((string)(excelWorksheet.Cells[row, 29] as Excel.Range).Value);
                         project.AgreementType = (string)(excelWorksheet.Cells[row, 30] as Excel.Range).Value;
                         project.FederalAgency = (string)(excelWorksheet.Cells[row, 31] as Excel.Range).Value;
                         project.MMG = (string)(excelWorksheet.Cells[row, 32] as Excel.Range).Value;
                         project.InstClient = (string)(excelWorksheet.Cells[row, 33] as Excel.Range).Value;
                         project.MVTitle = (string)(excelWorksheet.Cells[row, 34] as Excel.Range).Value;
-                        project.OracleProposalNumber = (int)(excelWorksheet.Cells[row, 35] as Excel.Range).Value;
+                        project.OracleProposalNumber = Convert.ToInt32((string)(excelWorksheet.Cells[row, 35] as Excel.Range).Value);
                         //is this abtk id? -> compare against the Overview_ID
-                        project.ProjectsID = (int)(excelWorksheet.Cells[row, 36] as Excel.Range).Value;
+                        project.ProjectsID = (int?)(excelWorksheet.Cells[row, 36] as Excel.Range).Value;
 
                         //add to index map
-                        if (!ExcelProjectsDictionary.ContainsKey(projectNumber))
+                        if (Program.ProjectsFromDB.ContainsKey(projectNumber))
                         {
-                            ExcelProjectsDictionary.Add(projectNumber, project);
-                            Projects value = ExcelProjectsDictionary[projectNumber];
-                            Console.WriteLine(value.ProjectNumber);
+                            Projects value = Program.ProjectsFromDB[projectNumber];
+                            if (project.ProjectNumber.Equals(value.ProjectNumber))
+                            {
+                                Console.WriteLine("Project: "+value.ProjectNumber+ " AbtName: "+ value.ProjectName + "  #" + count) ;
+                            }
                         }
                         else
                         {
                            // indexFinder.Add(projectNumber, -1);
-                            Program.LogNDisplay("the file: " + projectNumber + " have been previously processed: " + " \n index: " + count);
+                            Program.LogNDisplay("The Key: " + projectNumber + " is not in the dictionary " + count);
                         }
-
-                        //add to log file
-                        Program.LogNDisplay("current number: " + projectNumber + "  #" + count);
-                    }
-                    else
-                    {
-                        Program.LogNDisplay("No SharedPoint name found for " + projectNumber + " instead: " );
-                    }
                     count++;
                     row++;
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-
+                Program.LogNDisplay("Failed reading from Excel: " + e.Message);
             }
 
         }

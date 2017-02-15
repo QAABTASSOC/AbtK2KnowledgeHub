@@ -31,7 +31,7 @@ namespace AbtK2KnowledgeHub_OneTime
         { ".WPD",".wpd",".doc", ".docx", ".xlsx", ".xls",".pdf",".txt", ".pptx",".ppt", ".jpg", ".zip",".png",".rar" };
 
         public static Dictionary<string, string> ignoredRecords = new Dictionary<string, string>();
-        public static Dictionary<string, Projects> ProjetcsFromDB = new Dictionary<string, Projects>();
+        public static Dictionary<string, Projects> ProjectsFromDB = new Dictionary<string, Projects>();
 
 
         static void Main(string[] args)
@@ -55,8 +55,9 @@ namespace AbtK2KnowledgeHub_OneTime
              //   program.ImportDocuments();
              //   program.ApplyMetaDataToDocuments();
                
+              
+                program.ReadProjectsFromSQL();
                 ExcelReader.ReadConfig("Projects");
-                program.test();
                 Console.WriteLine("Import is complete. Press any key to exit.");
                 Console.ReadKey();
             }
@@ -71,12 +72,8 @@ namespace AbtK2KnowledgeHub_OneTime
             }
 
         }
-        //+ " where ProjectNumber in ('17288','19503','20152','19912','18210','16488','07544','17916','18274','19410','16590','20330','20149','20479','13243') " +
-        //                    "or ProjectNumber like '17288-%' or ProjectNumber like '19503-%' or ProjectNumber like '20152-%' or ProjectNumber like '19912-%' or " +
-        //                    "ProjectNumber like '18210-%' or ProjectNumber like '16488-%' or ProjectNumber like '07544-%' or ProjectNumber like '17916-%'  or " +
-        //                    "ProjectNumber like '18274-%'  or ProjectNumber like '19410-%'  or ProjectNumber like '16590-%'  or ProjectNumber like '20330-%' or " +
-        //                    "ProjectNumber like '20149-%'  or ProjectNumber like '20479-%'  or ProjectNumber like '13243-%' "
-        public void test()
+       
+        public void ReadProjectsFromSQL()
         {
             int countr = 0;
 
@@ -128,7 +125,7 @@ namespace AbtK2KnowledgeHub_OneTime
                         //Potential Worth
                         thisProject.PotentialWorth = Helper.SafeGetDecimal(reader, "PotentialWorth");
                         //Award Amount
-                        thisProject.AwardAmount = Helper.SafeGetDecimal(reader, "AwardAmount");
+                       // thisProject.AwardAmount = Helper.SafeGetDecimal(reader, "AwardAmount");
                         //Funded Amount
                         //Division  
                         thisProject.Division = GetDivision(Helper.SafeGetString(reader, "Division"));
@@ -143,49 +140,38 @@ namespace AbtK2KnowledgeHub_OneTime
                         //Parent Project 
                         string parentProjectNumber = Helper.SafeGetString(reader, "ParentProjectNumber");
                         //Is Active ? (Y / N)  Yes
-                        thisProject.IsPrimeText = (bool)thisProject.IsActive ? "TRUE" : "FALSE";
+                        thisProject.IsPrimeText = (bool)thisProject.IsActive ? "Yes" : "No";
                         thisProject.InstClient = Helper.SafeGetString(reader, "InstClient");
                         thisProject.FederalAgency = Helper.SafeGetString(reader, "FederalAgency");
                         thisProject.AgreementTrackNumber = Helper.SafeGetDecimal(reader, "AgreementTrackNumber");
                         thisProject.MVTitle = Helper.SafeGetString(reader, "MVTitle");
                         thisProject.MMG = Helper.SafeGetString(reader, "MMG");
+
                         string ProposalOracleNumber = Helper.SafeGetString(reader, "Proposalnumber");
                         string isGoodRef;
                         if (thisProject.IsGoodReference.HasValue)
                             isGoodRef = (bool)thisProject.IsGoodReference ? "Yes" : "No";
                         else
                             isGoodRef = "Unknown";
+
                         thisProject.ProjectComments = Helper.SafeGetString(reader, "ProjectComments");
                         thisProject.ContractValue = Helper.SafeGetDecimal(reader, "ContractValue");
 
+
                         //add to index map
-                        if (!ProjetcsFromDB.ContainsKey(projectNumber))
+                        if (!ProjectsFromDB.ContainsKey(projectNumber))
                         {
-                            ProjetcsFromDB.Add(projectNumber, thisProject);
-                            Projects value = ProjetcsFromDB[projectNumber];
-                            Console.WriteLine(value.ProjectNumber);
+                            ProjectsFromDB.Add(projectNumber, thisProject);
+                            Console.WriteLine(projectNumber + " have been added to the Dictionary");
                         }
                         else
                         {
-                            // indexFinder.Add(projectNumber, -1);
                             Program.LogNDisplay("the file: " + projectNumber + " have been previously processed: " + " \n index: " + count);
                         }
                     
                     }
                     sqlConnetion.Close();
                 }
-
-                var arrayOfAllKeys = ExcelReader.ExcelProjectsDictionary.Keys.ToArray();
-                foreach (var item in arrayOfAllKeys)
-                {
-                    bool PN = ProjetcsFromDB[item].ProjectNumber.Equals(ExcelReader.ExcelProjectsDictionary[item]);
-                    if (PN)
-                    {
-                        Console.WriteLine(countr+ " Project: " + ProjetcsFromDB[item].ProjectNumber + " have been found" );
-                    }
-                   
-                }
-                
             }
         }
 
