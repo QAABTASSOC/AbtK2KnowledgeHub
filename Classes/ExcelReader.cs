@@ -12,8 +12,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         private static Excel.Application excelApp;
         private static Excel.Workbook excelWorkbook;
         private static Excel.Worksheet excelWorksheet;
-
-        public static List<Projects> ProjectsFromExcel = new List<Projects>();
+        
         public static Dictionary<string, Projects> ExcelProjectsDictionary = new Dictionary<string, Projects>();
 
         private static bool start;
@@ -26,9 +25,9 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         public static int ReadConfig(String fileName)
         {
             excelApp = new Excel.Application();
-            //TO USE EXCEL: PUT THE PATH IN THE LINE BELOW
+    
             try
-            {
+            {   //TO USE EXCEL: PUT THE PATH IN THE LINE BELOW
                 excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\" + fileName + ".xlsx", true, true);
                 excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("Sheet1");
             }
@@ -46,49 +45,51 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                 case "Projects":
                     LoadSharePointPojectsExtract();
                     //Projects are done
-                    Program.LogNDisplay("\n Finished Loading Projects from Excel \n");
-
+                    Program.LogNDisplay("\n Finished Loading Sharepoint Projects \n");
                     break;
                 case "Descriptions":
-                    LoadSharePointPojectsExtract();
-                    //Projects are done
-                    Program.LogNDisplay("\n Finished Loading Projects from Excel \n");
-
+                    LoadSharePointProjectDescriptionsExtract();
+                    //Descriptions are done
+                    Program.LogNDisplay("\n Finished Loading Sharepoint Descriptions \n");
                     break;
 
                 case "Documents":
                     LoadSharePointPojectsExtract();
-                    //Projects are done
-                    Program.LogNDisplay("\n Finished Loading Projects from Excel \n");
+                    //Documents are done
+                    Program.LogNDisplay("\n Finished Loading Sharepoint Documents \n");
+                    break;
 
+                case "Tags":
+                    LoadSharePointPojectsExtract();
+                    //Tags are done
+                    Program.LogNDisplay("\n Finished Loading Sharepoint Tags \n");
                     break;
             }
-
-           //LoadPaths();
-           // Program.LogNDisplay("\n Done Loading all the posible paths \n");
-
-            excelWorkbook.Close();// change missValue to null
+            
+            excelWorkbook.Close();
             excelApp.Quit();
 
+            //release from memory
             ReleaseObject(excelWorksheet);
             ReleaseObject(excelWorkbook);
             ReleaseObject(excelApp);
-
-            //returns the drive to be tested
+            
             return 0;
         }
         public static void LoadSharePointPojectsExtract()
         {
-            int count = 0;
+            int count = 1;
             int row = 2;
-            try
-            {
-                while ((string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value != null)
+
+            Program.LogNDisplay("\n Begin Loading Projects \n");
+
+            while ((string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value != null)
                 {
                     Projects project = new Projects();
-                    string projectNumber = (string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value; 
-
-                        //load row into memory
+                    string projectNumber = (string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value;
+                try
+                {
+                    //load row into memory
                         project.ProjectNumber = (string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value;
                         project.ProjectTitle = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
                         project.ProjectName = (string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
@@ -129,10 +130,16 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                         project.InstClient = (string)(excelWorksheet.Cells[row, 33] as Excel.Range).Value;
                         project.MVTitle = (string)(excelWorksheet.Cells[row, 34] as Excel.Range).Value;
                         project.OracleProposalNumber = Convert.ToInt32((string)(excelWorksheet.Cells[row, 35] as Excel.Range).Value);
-                        //is this abtk id? -> compare against the Overview_ID
+                        //ABTKID = Project ID
                         project.ProjectsID = (int?)(excelWorksheet.Cells[row, 36] as Excel.Range).Value;
 
-                        //add to index map
+                }
+                catch (Exception e)
+                {
+                    Program.LogNDisplay("Failed to read Excel. Projects line #" + row+"\n Message: " + e.Message);
+                }
+
+                //reconcile against the DB
                         if (Program.ProjectsFromDB.ContainsKey(projectNumber))
                         {
                             Projects value = Program.ProjectsFromDB[projectNumber];
@@ -143,43 +150,100 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                         }
                         else
                         {
-                           // indexFinder.Add(projectNumber, -1);
-                            Program.LogNDisplay("The Key: " + projectNumber + " is not in the dictionary " + count);
+                         
+                            Program.LogNDisplay("Key: " + projectNumber + " #" + count +" is not in the dictionary."+
+                                "Projects extract line #" + row );
                         }
-                    count++;
-                    row++;
+                  count++;
+                  row++;
                 }
-            }
-            catch (Exception e)
+          
+        }
+        public static void LoadSharePointProjectDescriptionsExtract()
+        {
+            int count = 1;
+            int row = 2;
+
+            Program.LogNDisplay("\n Begin Loading Sharepoint Descriptions \n");
+
+            while ((string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value != null)
             {
-                Program.LogNDisplay("Failed reading from Excel: " + e.Message);
+                ProjectDescription description = new ProjectDescription();
+                string projectNumber = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
+                try
+                {
+                    //load row into memory
+                    description.ProjectName = (string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value;
+                    description.ProjectNumber = projectNumber;
+                    description.Title= (string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
+                    description.Overview = (string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value;
+                    description.Accomplishments = (string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value;
+                    description.Awards = (string)(excelWorksheet.Cells[row, 6] as Excel.Range).Value;
+                    description.Innovative = (string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value;
+                    description.KeyDeliverables = (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
+                    description.Problems = (string)(excelWorksheet.Cells[row, 9] as Excel.Range).Value;
+                    description.ScopeOfWork = (string)(excelWorksheet.Cells[row, 10] as Excel.Range).Value;
+                    //if int or string
+                    string descType = (string)(excelWorksheet.Cells[row, 11] as Excel.Range).Value;
+                    if (descType != null)
+                    {
+                        if (descType.Equals( "Primary"))
+                            description.DescriptionType = 1;
+                        else
+                            description.DescriptionType = 2;
+                    }
+                    
+                    description.DescriptionID = (int)(excelWorksheet.Cells[row, 12] as Excel.Range).Value;
+
+                    //need to talk to deepa the sql view cointains projectid not number.
+                    // description.ProjectsID = (int?)(excelWorksheet.Cells[row, 1] as Excel.Range).Value;
+
+                    //    if (((string)(excelWorksheet.Cells[row, 25] as Excel.Range).Value).ToUpper().Equals("TRUE"))
+                    //{
+                    //    description.IsActive = true;
+                    //}
+                    //else {
+                    //    description.IsActive = false;
+                    //}
+                    //is this abtk id? -> compare against the Overview_ID
+                    description.ProjectsID = (int?)(excelWorksheet.Cells[row, 36] as Excel.Range).Value;
+
+                }
+                catch (Exception e)
+                {
+                    Program.LogNDisplay("Failed to read Excel. Description line #" + row + "\n Message: " + e.Message);
+                }
+
+                //reconcile against the DB
+                if (Program.ProjectsFromDB.ContainsKey(projectNumber)){
+                    //find description project
+                    if (Program.ProjectsFromDB[projectNumber].DescriptionContainsKey(projectNumber)){
+                        //compare
+                        Projects value = Program.ProjectsFromDB[projectNumber];
+                        if (value.GetDescription(projectNumber).ProjectNumber.Equals(description.ProjectNumber))
+                        {
+                            Console.WriteLine("Description: " + description.DescriptionID + " AbtName: " + description.ProjectName + "  #" + count);
+                        }
+                        else
+                        {
+                            Program.LogNDisplay("Key: " + projectNumber + " #" + count + " is not in the dictionary." +
+                                "Projects extract line #" + row);
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Project number not found: " + projectNumber + " AbtName: " + description.ProjectName + "  #" + count);
+                }
+                    
+                
+                   
+                count++;
+                row++;
             }
 
         }
-        //public static void LoadPaths()
-        //{
-        //    int count = 0;
-        //    int row = 2;
-        //    try
-        //    {
-        //        while ((string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value != null)
-        //        {
-        //            string path = (string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
-        //            //add current name to the array
-        //            pathsToSearch[count] = path;
-        //            Program.LogNDisplay("Path name: " + path + " index: " + count);
 
-        //            count++;
-        //            row++;
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Program.LogNDisplay("Error Loading The Paths From Sheet \n\n" + e.Message);
-        //    }
-
-
-        //}
         public static void ReleaseObject(object obj)
         {
             try

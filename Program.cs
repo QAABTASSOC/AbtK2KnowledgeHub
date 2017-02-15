@@ -754,12 +754,7 @@ namespace AbtK2KnowledgeHub_OneTime
                 
                     using (SqlConnection sqlConnetion = new SqlConnection(Helper.GetConnectionString(Constants.ConnectionStringKey)))
                     {
-                        string queryStatement = "SELECT * FROM " + Helper.GetAppSettingValue(Constants.ProjectDescriptionViewKey) +
-                            "  where ProjectNumber in ('17288','19503','20152','19912','18210','16488','07544','17916','18274','19410','16590','20330','20149','20479','13243') " +
-                            "or ProjectNumber like '17288-%' or ProjectNumber like '19503-%' or ProjectNumber like '20152-%' or ProjectNumber like '19912-%' or " +
-                            "ProjectNumber like '18210-%' or ProjectNumber like '16488-%' or ProjectNumber like '07544-%' or ProjectNumber like '17916-%'  or " +
-                            "ProjectNumber like '18274-%'  or ProjectNumber like '19410-%'  or ProjectNumber like '16590-%'  or ProjectNumber like '20330-%' or " +
-                            "ProjectNumber like '20149-%'  or ProjectNumber like '20479-%'  or ProjectNumber like '13243-%' ";
+                        string queryStatement = "SELECT * FROM " + Helper.GetAppSettingValue(Constants.ProjectDescriptionViewKey) ;
 
                         using (SqlCommand command = new SqlCommand(queryStatement, sqlConnetion))
                         {

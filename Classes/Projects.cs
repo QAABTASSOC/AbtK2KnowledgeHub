@@ -8,6 +8,69 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
 {
     public class Projects
     {
+        public Dictionary<string, ProjectDescription> DescriptionDictionary = new Dictionary<string, ProjectDescription>();
+        public void SetDescription(string key, ProjectDescription value)
+        {
+            if (DescriptionDictionary.ContainsKey(key))
+            {
+                DescriptionDictionary[key] = value;
+            }
+            else
+            {
+                DescriptionDictionary.Add(key, value);
+            }
+        }
+        public ProjectDescription GetDescription(string key)
+        {
+            ProjectDescription result = null;
+
+            if (DescriptionDictionary.ContainsKey(key))
+            {
+                result = DescriptionDictionary[key];
+            }
+
+            return result;
+        }
+        public bool DescriptionContainsKey(string key)
+        {
+            if (DescriptionDictionary.ContainsKey(key))
+            {
+                return true;
+            }
+            else { return false; }
+        }
+
+        public Dictionary<string, ProjectDocuments> DocumentsDictionary = new Dictionary<string, ProjectDocuments>();
+        public void SetDocuments(string key, ProjectDocuments value)
+        {
+            if (DocumentsDictionary.ContainsKey(key))
+            {
+                DocumentsDictionary[key] = value;
+            }
+            else
+            {
+                DocumentsDictionary.Add(key, value);
+            }
+        }
+        public ProjectDocuments GetDocuments(string key)
+        {
+            ProjectDocuments result = null;
+
+            if (DocumentsDictionary.ContainsKey(key))
+            {
+                result = DocumentsDictionary[key];
+            }
+
+            return result;
+        }
+        public bool DocumentContainsKey(string key)
+        {
+            if (DocumentsDictionary.ContainsKey(key))
+            {
+                return true;
+            }
+            else { return false; }
+        }
         /// <summary>
         /// SharePoint Field : AbtkProjectId
         /// SharePoint Type : Number
@@ -194,5 +257,6 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         public decimal? AwardAmount{ get; set; }
         public decimal? FundedAmount { get; set; }
         public int? OracleProposalNumber { get; set; }
+
     }
 }

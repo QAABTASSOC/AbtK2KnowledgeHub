@@ -12,17 +12,17 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Field : AbtKDescriptionId
         /// SharePoint Type : Number
         /// </summary>
-        public int DescriptionID { get; set; }
+        public int? DescriptionID { get; set; }
         /// <summary>
-        /// SharePoint Field : KHProject
+        /// SharePoint Field :AbtKProjectId
         /// SharePoint Type : Lookup
         /// </summary>
-        public int ProjectsID { get; set; }
+        public int? ProjectsID { get; set; }
         /// <summary>
         /// SharePoint Field : DescriptionType
         /// SharePoint Type : Choice
         /// </summary>
-        public int DescriptionType { get; set; }
+        public int? DescriptionType { get; set; }
         /// <summary>
         /// SharePoint Field : Title
         /// SharePoint Type : Single Line of Text
@@ -67,6 +67,9 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Field : Is_x0020_Active
         /// SharePoint Type : bool
         /// </summary>
-        public bool IsActive { get; set; }
+        public bool? IsActive { get; set; }
+
+        public string ProjectNumber { get; set; }
+        public string ProjectName { get; set; }
     }
 }
