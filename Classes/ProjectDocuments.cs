@@ -12,12 +12,12 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Field : AbtkDocumentId
         /// SharePoint Type : Number
         /// </summary>
-        public int DocumentID { get; set; }
+        public Int32? DocumentID { get; set; }
         /// <summary>
         /// SharePoint Field : KHProject
         /// SharePoint Type : Lookup
         /// </summary>
-        public int ProjectsID { get; set; }
+        public Int32? ProjectsID { get; set; }
         /// <summary>
         /// SharePoint Field : Title
         /// SharePoint Type : Single Line of Text
@@ -34,8 +34,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Field : DocumentDate
         /// SharePoint Type : Date and Time
         /// </summary>
-        public DateTime DocumentDate { get; set; }
-
+        public DateTime? DocumentDate { get; set; }
         public string ProjectNumber { get; set; }
         public string ProjectName { get; set; }
         public string DocumentName { get; set; }

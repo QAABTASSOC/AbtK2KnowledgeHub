@@ -55,13 +55,17 @@ namespace AbtK2KnowledgeHub_OneTime
              //   program.ImportDocuments();
              //   program.ApplyMetaDataToDocuments();
                
-                //sql
+                //Projects
                 program.ReadProjectsFromSQL();
-                program.ReadDescriptionFromSQL();
+                program.ReadProjectDescriptionFromSQL();
+                program.ReadProjectDocumentsFromSQL();
 
                 //sharepoint
                 ExcelReader.ReadConfig("Projects");
                 ExcelReader.ReadConfig("Descriptions");
+                ExcelReader.ReadConfig("Documents");
+
+                //Proposals
 
                 Console.WriteLine("Import is complete. Press any key to exit.");
                 Console.ReadKey();
@@ -179,7 +183,7 @@ namespace AbtK2KnowledgeHub_OneTime
                 }
             }
         }
-        public void ReadDescriptionFromSQL()
+        public void ReadProjectDescriptionFromSQL()
         {
           
             Console.WriteLine("\n Begin Reading Descriptions from the SQL \n");
@@ -244,6 +248,72 @@ namespace AbtK2KnowledgeHub_OneTime
                 Program.LogNDisplay("Could not connect to ProjectDescriptionViewKey " + e.Message);
             }
         }
+        public void ReadProjectDocumentsFromSQL()
+        {
+            Console.WriteLine("Applying Metadata to documents");
+                           
+               using (SqlConnection sqlConnetion = new SqlConnection(Helper.GetConnectionString(Constants.ConnectionStringKey)))
+                    {
+                        string queryStatement = "SELECT * FROM " + Helper.GetAppSettingValue(Constants.ProjectDocumentsViewKey);
+                        using (SqlCommand command = new SqlCommand(queryStatement, sqlConnetion))
+                        {
+                            sqlConnetion.Open();
+                            SqlDataReader reader = command.ExecuteReader();
+                            int count = 0; int i = 0; string lastProjectNumber = string.Empty;
+
+                            while (reader.Read())
+                            {
+                              
+                                string projectNumber = string.Empty;
+                                string fileName = string.Empty;
+                                string documentTitle = string.Empty;
+
+                                try
+                                {
+                                    ProjectDocuments thisDocument = new ProjectDocuments();        
+                                    projectNumber = Helper.SafeGetString(reader, "ProjectNumber");
+                                    fileName = Helper.SafeGetString(reader, "UploadedFileName");
+                                    documentTitle = Helper.SafeGetString(reader, "Title");
+
+                                    thisDocument.DocumentID = Helper.SafeGetInt32(reader, "FilesID");
+                                    thisDocument.Title  = String.IsNullOrEmpty(documentTitle) ? "" : StringExt.Truncate(documentTitle, 255);
+                                    thisDocument.ProjectNumber = projectNumber;
+                                    thisDocument.DocumentName = fileName;
+                                    thisDocument.Author = Helper.SafeGetString(reader, "Author");
+                                    thisDocument.ProjectsID = Helper.SafeGetInt32(reader, "ProjectsID");
+                                    thisDocument.DocumentDate = Helper.SafeGetDateTime(reader, "FileDate");
+
+                            //add to index map
+                            if (ProjectsFromDB.ContainsKey(projectNumber))
+                            {
+                                if (!ProjectsFromDB[projectNumber].DocumentContainsKey(Convert.ToString(thisDocument.DocumentID)))
+                                {
+
+                                    //add Description to Project
+                                    ProjectsFromDB[projectNumber].SetDocuments(projectNumber, thisDocument);
+                                    Console.WriteLine("Document ID: " + thisDocument.DocumentID + " for Project #" +
+                                                        projectNumber + " have been added to the Dictionary #" + count);
+                                }
+                                else
+                                {
+                                    Program.LogNDisplay("Document ID " + thisDocument.DocumentID + " for project" +
+                                                        projectNumber + " is already there #" + count);
+                                }
+                                count++;
+                            }
+
+                        }
+
+                        catch (Exception e)
+                        {
+                            Program.LogNDisplay("Failed to catch  Document from SQL: " + e.Message);
+                        }
+
+                    }
+                            sqlConnetion.Close();
+                        }
+                    }
+            }
 
         public static void LogNDisplay(string action, long elapsedTipe)
         {
@@ -316,215 +386,7 @@ namespace AbtK2KnowledgeHub_OneTime
         }
 
         //DEEPA'S Code Bellow
-        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-        public void ImportProjects()
-        {
-            AbKLog log = Helper.ConstructLog(Enums.MigrationModule.Project, Enums.LogType.Info, correlationId, Constants.TranformAndPush + " for Project", DateTime.UtcNow);
-            Helper.WriteLogToLocalFile(log, Helper.ProjectLogFilePath);
-            Console.WriteLine(Constants.TranformAndPush + " for Project");
        
-            try
-            {
-                using (ClientContext clientContext = new ClientContext(knowledgeHubWebUrl))
-                {
-                    clientContext.Credentials = new SharePointOnlineCredentials(emailId, Helper.GetPasswordFromConsoleInput(password));
-                    Web web = clientContext.Web;
-                    clientContext.Load(web);
-                    List projectList = web.Lists.GetByTitle(Helper.GetAppSettingValue(Constants.ProjectListKey));
-                    clientContext.Load(projectList);
-                    clientContext.ExecuteQuery();
-
-                    using (SqlConnection sqlConnetion = new SqlConnection(Helper.GetConnectionString(Constants.ConnectionStringKey)))
-                    {
-                        string queryStatement = "SELECT * FROM " + Helper.GetAppSettingValue(Constants.ProjectViewKey) + " where ProjectNumber in ('17288','19503','20152','19912','18210','16488','07544','17916','18274','19410','16590','20330','20149','20479','13243') " +
-                            "or ProjectNumber like '17288-%' or ProjectNumber like '19503-%' or ProjectNumber like '20152-%' or ProjectNumber like '19912-%' or " +
-                            "ProjectNumber like '18210-%' or ProjectNumber like '16488-%' or ProjectNumber like '07544-%' or ProjectNumber like '17916-%'  or " +
-                            "ProjectNumber like '18274-%'  or ProjectNumber like '19410-%'  or ProjectNumber like '16590-%'  or ProjectNumber like '20330-%' or " +
-                            "ProjectNumber like '20149-%'  or ProjectNumber like '20479-%'  or ProjectNumber like '13243-%' ";
-                        using (SqlCommand command = new SqlCommand(queryStatement, sqlConnetion))
-                        {
-                            sqlConnetion.Open();
-                            SqlDataReader reader = command.ExecuteReader();
-                            int count = 0; int i = 0;
-                            while (reader.Read())
-                            {
-
-                                ListItem item = null;
-                                int? projectId = 0;
-                                Enums.OperationType typeOfOperation = Enums.OperationType.NotKnown;
-                                List<AbKLog> recordLogs = new List<AbKLog>();
-                                try
-                                {
-                                    string projectNumber = Helper.SafeGetString(reader, "ProjectNumber");
-                                    projectId = Helper.SafeGetInt32(reader, "ProjectsID");
-                                    if (string.IsNullOrEmpty(projectNumber))
-                                        continue;
-
-                                    string query =
-                                       @"<View>
-                                  <Query>
-                                    <Where>
-                                      <Eq>
-                                        <FieldRef Name='ProjectOracleNumber' />
-                                        <Value Type='Text'>" + projectNumber + @"</Value>
-                                      </Eq>
-                                    </Where>
-                                  </Query>
-                                  <ViewFields>
-                                    <FieldRef Name='ID' />
-                                 </ViewFields>
-                                </View>";
-                                    ListItemCollection itemCollection = GetItems(clientContext, projectList, query);
-
-                                    User ProjectDirector = null; User TechnicalOfficer = null;
-                                    string projectDirector = Helper.SafeGetString(reader, "ProjectDirector");
-                                    string technicalOfficer = Helper.SafeGetString(reader, "TechnicalOfficer");
-                                    //Getting SharePoint user based on email id
-                                    ProjectDirector = GetSPUser(clientContext, web, projectDirector);
-                                    TechnicalOfficer = GetSPUser(clientContext, web, technicalOfficer);
-
-                                    //Get Parent Project if any
-                                    FieldLookupValue parentProjectLookup = null;
-                                    string parentProjectNumber = Helper.SafeGetString(reader, "ParentProject");
-                                    if (!string.IsNullOrEmpty(parentProjectNumber))
-                                    {
-                                        string parentProjectCamlQuery = @"<View><Query><Where><Eq><FieldRef Name='ProjectOracleNumber' /><Value Type='Text'>" + parentProjectNumber + @"</Value></Eq></Where>
-                                                              </Query><ViewFields><FieldRef Name='ID' /></ViewFields></View>";
-                                        ListItemCollection parentProjectItemCollection = GetItems(clientContext, projectList, parentProjectCamlQuery);
-                                        if (parentProjectItemCollection != null && parentProjectItemCollection.Count > 0)
-                                        {
-                                            ListItem parentProject = parentProjectItemCollection[0];
-                                            parentProjectLookup = new FieldLookupValue();
-                                            parentProjectLookup.LookupId = parentProject.Id;
-                                        }
-                                    }
-
-                                    if (itemCollection != null && itemCollection.Count > 0)
-                                    {
-                                        item = itemCollection[0];
-                                        typeOfOperation = Enums.OperationType.Update;
-                                        log = Helper.ConstructLog(Enums.MigrationModule.Project, Enums.LogType.Info, correlationId, Constants.UpdateRecord, DateTime.UtcNow,
-                                            projectId.Value, typeOfOperation, item.Id);
-                                        recordLogs.Add(log);
-                                    }
-                                    else
-                                    {
-                                        typeOfOperation = Enums.OperationType.Add;
-                                        ListItemCreationInformation itemCreateInfo = new ListItemCreationInformation();
-                                        item = projectList.AddItem(itemCreateInfo);
-                                        log = Helper.ConstructLog(Enums.MigrationModule.Project, Enums.LogType.Info, correlationId, Constants.AddingRecord, DateTime.UtcNow,
-                                           projectId.Value, typeOfOperation, 0);
-                                        recordLogs.Add(log);
-                                        item["ProjectOracleNumber"] = projectNumber;
-                                        item["AbtkProjectId"] = projectId;
-                                    }
-
-                                    string projectTitle = Helper.SafeGetString(reader, "ProjectTitle");
-                                    bool? isActive = Helper.SafeGetBool(reader, "IsActive");
-                                    bool? isGoodReference = Helper.SafeGetBool(reader, "IsGoodReference");
-
-                                    item["ProjectContractNumber"] = Helper.SafeGetString(reader, "ContractNumber");
-                                    item["StartDate"] = Helper.SafeGetDateTime(reader, "BeginDate");
-                                    item["_EndDate"] = Helper.SafeGetDateTime(reader, "EndDate");
-                                    item["ProjectOriginalEndDate"] = Helper.SafeGetDateTime(reader, "OriginalEndDate");
-                                    //May contain upto more than 500 characters so, truncating
-                                    item["Title"] = String.IsNullOrEmpty(projectTitle) ? "" : StringExt.Truncate(projectTitle, 255);
-                                    item["BS_Project"] = Helper.SafeGetString(reader, "ProjectName");
-                                    item["ProjectComments"] = Helper.SafeGetString(reader, "ProjectComments");
-                                    item["ProjectPotentialWorth"] = Helper.SafeGetDecimal(reader, "PotentialWorth");
-                                    item["ProjectContractValue"] = Helper.SafeGetDecimal(reader, "ContractValue");
-                                    item["ProjectCurrentFunding"] = Helper.SafeGetDecimal(reader, "CurrentFunding");
-                                    item["ProjectAdditionalReference"] = Helper.SafeGetString(reader, "AdditionalReference");
-                                    item["KHIsAbtPrime"] = Convert.ToBoolean(Helper.SafeGetBool(reader, "IsPrime")) ? true : false;
-                                    item["KHClient"] = Helper.SafeGetString(reader, "Client");
-                                    item["KHUltimateClient"] = Helper.SafeGetString(reader, "UltimateClient");
-                                    item["KHAgreementID"] = Helper.SafeGetInt32(reader, "AgreementID");
-                                    item["KHAgreementName"] = Helper.SafeGetString(reader, "AgreementName");
-                                    item["KHAgreementType"] = Helper.SafeGetString(reader, "AgreementType");
-                                    item["KHDivision"] = GetDivision(Helper.SafeGetString(reader, "Division"));
-                                    item["KHPractice"] = GetPractice(Helper.SafeGetString(reader, "Practice"));
-                                    item["KHInstClient"] = Helper.SafeGetString(reader, "InstClient");
-                                    item["KHFederalAgency"] = Helper.SafeGetString(reader, "FederalAgency");
-                                    item["KHAgreementTrackNumber"] = Helper.SafeGetDecimal(reader, "AgreementTrackNumber");
-                                    item["KHMVTitle"] = Helper.SafeGetString(reader, "MVTitle");
-                                    item["KHMMG"] = Helper.SafeGetString(reader, "MMG");
-                                    item["ParentProject"] = parentProjectLookup;
-                                    item["ProposalOracleNumber"] = Helper.SafeGetString(reader, "Proposalnumber");
-
-                                    if (isGoodReference.HasValue)
-                                        item["ProjectIsGoodReference"] = isGoodReference.Value ? "Yes" : "No";
-                                    else
-                                        item["ProjectIsGoodReference"] = "Unknown";
-
-                                    if (ProjectDirector != null && ProjectDirector.ServerObjectIsNull != null && !ProjectDirector.ServerObjectIsNull.Value)
-                                    {
-                                        FieldUserValue userValue = new FieldUserValue();
-                                        userValue.LookupId = ProjectDirector.Id;
-                                        item["BS_ProjectDirector"] = ProjectDirector;//Helper.SafeGetString(reader, "ProjectDirector");
-                                    }
-                                    else
-                                        item["ProjectDirectorOld"] = projectDirector;
-
-                                    if (TechnicalOfficer != null && TechnicalOfficer.ServerObjectIsNull != null && !TechnicalOfficer.ServerObjectIsNull.Value)
-                                    {
-                                        FieldUserValue userValue = new FieldUserValue();
-                                        userValue.LookupId = TechnicalOfficer.Id;
-                                        item["ProjectTechnicalOfficer"] = TechnicalOfficer;//Helper.SafeGetString(reader, "ProjectTechnicalOfficer");
-                                    }
-                                    else
-                                        item["ProjectTechnicalOfficerOld"] = technicalOfficer;
-
-                                    item["ProjectStatus"] = Helper.SafeGetString(reader, "ProjectStatus");
-                                    item["ProjectType"] = Helper.SafeGetString(reader, "ProjectType");
-                                    if (isActive.HasValue)
-                                    {
-                                        item["Is_x0020_Active"] = isActive.Value ? "Yes" : "No";
-                                    }
-
-                                    item.Update();
-                                    clientContext.ExecuteQuery();
-                                    log = Helper.ConstructLog(Enums.MigrationModule.Project, Enums.LogType.Info, correlationId, Constants.RecordAddedUpdated, DateTime.UtcNow,
-                                        projectId.Value, typeOfOperation, item.Id);
-                                    recordLogs.Add(log);
-                                }
-                                catch (Exception e)
-                                {
-                                    log = Helper.ConstructLog(Enums.MigrationModule.Project, Enums.LogType.Error, correlationId, Constants.ErrorRecordAddedUpdated + " " + e.Message,
-                                        DateTime.UtcNow, projectId.Value, typeOfOperation, (item == null || item.ServerObjectIsNull == null || !item.ServerObjectIsNull.Value) ? 0 : item.Id);
-                                    recordLogs.Add(log);
-                                }
-                                finally
-                                {
-                                    count++; i++;
-                                    if (count == 10)
-                                    {
-                                        Console.WriteLine(String.Format("{0} Projects imported.", i));
-                                        count = 0;
-                                    }
-                                    Helper.WriteLogsToLocalFile(recordLogs, Helper.ProjectLogFilePath);
-                                }
-                            }
-                            sqlConnetion.Close();
-                            log = Helper.ConstructLog(Enums.MigrationModule.Project, Enums.LogType.Info, correlationId, "Project import is complete.", DateTime.UtcNow);
-                            Helper.WriteLogToLocalFile(log, Helper.ProjectLogFilePath);
-                            Console.WriteLine("Projects Imported.");
-                        }
-                    }
-                }
-            }
-            catch (WebException we)
-            {
-                Console.WriteLine("Some error has occured while connecting to SharePoint Site: " + we.Message);
-                log = Helper.ConstructLog(Enums.MigrationModule.Project, Enums.LogType.Error, correlationId, we.Message, DateTime.UtcNow);
-                Helper.WriteLogToLocalFile(log, Helper.ProjectLogFilePath);
-            }
-            catch (Exception e)
-            {
-                log = Helper.ConstructLog(Enums.MigrationModule.Project, Enums.LogType.Error, correlationId, e.Message, DateTime.UtcNow);
-                Helper.WriteLogToLocalFile(log, Helper.ProjectLogFilePath);
-            }
-        }
-
         public void ImportStaff()
         {
             AbKLog log;
@@ -1317,8 +1179,7 @@ namespace AbtK2KnowledgeHub_OneTime
                 using (ClientContext clientContext = new ClientContext(knowledgeHubWebUrl))
                 {
                     clientContext.Credentials = new SharePointOnlineCredentials(emailId, Helper.GetPasswordFromConsoleInput(password));
-                    Web web = clientContext.Web;
-                    clientContext.Load(web);
+
                     int i = 0; int count = 0;
                     using (OleDbConnection connection = new OleDbConnection(Helper.GetConnectionString(Constants.ExcelConnectionStringKey)))
                     {

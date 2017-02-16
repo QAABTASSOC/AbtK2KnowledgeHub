@@ -15,13 +15,6 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
 
         public static Dictionary<string, Projects> ExcelProjectsDictionary = new Dictionary<string, Projects>();
 
-        private static bool start;
-        public static bool Start
-        {
-            get { return start; }
-            set { start = value; }
-        }
-
         public static int ReadConfig(String fileName)
         {
             excelApp = new Excel.Application();
@@ -244,10 +237,8 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                 row++;
             }
         }
-
         public static void LoadSharePointPojectsDocumentsExtract()
         {
-
             int count = 1;
             int row = 2;
 
@@ -278,8 +269,8 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                         document.Author = (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
                     }
                     
-                    document.DocumentDate = (DateTime)(excelWorksheet.Cells[row, 9] as Excel.Range).Value;
-                    document.DocumentID = (int)(excelWorksheet.Cells[row, 13] as Excel.Range).Value;
+                    document.DocumentDate = Convert.ToDateTime((string)(excelWorksheet.Cells[row, 9] as Excel.Range).Value);
+                    document.DocumentID = (Int32)(excelWorksheet.Cells[row, 13] as Excel.Range).Value;
                   
                 }
                 catch (Exception e)
