@@ -36,6 +36,8 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// </summary>
         public DateTime DocumentDate { get; set; }
 
-
+        public string ProjectNumber { get; set; }
+        public string ProjectName { get; set; }
+        public string DocumentName { get; set; }
     }
 }

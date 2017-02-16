@@ -55,9 +55,14 @@ namespace AbtK2KnowledgeHub_OneTime
              //   program.ImportDocuments();
              //   program.ApplyMetaDataToDocuments();
                
-              
+                //sql
                 program.ReadProjectsFromSQL();
+                program.ReadDescriptionFromSQL();
+
+                //sharepoint
                 ExcelReader.ReadConfig("Projects");
+                ExcelReader.ReadConfig("Descriptions");
+
                 Console.WriteLine("Import is complete. Press any key to exit.");
                 Console.ReadKey();
             }
@@ -76,6 +81,7 @@ namespace AbtK2KnowledgeHub_OneTime
         public void ReadProjectsFromSQL()
         {
             int countr = 0;
+            Console.WriteLine("Begin Reading Projects from the SQL \n");
 
             using (SqlConnection sqlConnetion = new SqlConnection("Data Source = 10.221.100.52; Initial Catalog = abtknowledge; User ID = abtknowledge; Password = 2SxBZD3er63C; persist security info=True;"))
             {
@@ -157,24 +163,87 @@ namespace AbtK2KnowledgeHub_OneTime
                         thisProject.ProjectComments = Helper.SafeGetString(reader, "ProjectComments");
                         thisProject.ContractValue = Helper.SafeGetDecimal(reader, "ContractValue");
 
-
                         //add to index map
                         if (!ProjectsFromDB.ContainsKey(projectNumber))
                         {
                             ProjectsFromDB.Add(projectNumber, thisProject);
-                            Console.WriteLine(projectNumber + " have been added to the Dictionary");
+                            Console.WriteLine(projectNumber + " have been added to the Dictionary #" + count);
                         }
                         else
                         {
                             Program.LogNDisplay("the file: " + projectNumber + " have been previously processed: " + " \n index: " + count);
                         }
-                    
+                        count++;
                     }
                     sqlConnetion.Close();
                 }
             }
         }
+        public void ReadDescriptionFromSQL()
+        {
+          
+            Console.WriteLine("\n Begin Reading Descriptions from the SQL \n");
+            try
+            {
 
+                using (SqlConnection sqlConnetion = new SqlConnection(Helper.GetConnectionString(Constants.ConnectionStringKey)))
+                {
+                    string queryStatement = "SELECT * FROM " + Helper.GetAppSettingValue(Constants.ProjectDescriptionViewKey);
+
+                    using (SqlCommand command = new SqlCommand(queryStatement, sqlConnetion))
+                    {
+                        sqlConnetion.Open();
+                        SqlDataReader reader = command.ExecuteReader();
+                        int count = 0;
+
+                        while (reader.Read())
+                        {
+                            try
+                            {
+                                ProjectDescription thisDescription = new ProjectDescription();
+
+                                string projectNumber = Helper.SafeGetString(reader, "ProjectNumber");
+                                thisDescription.ProjectNumber = projectNumber;
+                                thisDescription.Title = Helper.SafeGetString(reader, "Title");
+                                //unique id field in the view in sql
+                                thisDescription.DescriptionID = Helper.SafeGetInt64(reader, "OverviewID");
+                                thisDescription.ProjectsID = Helper.SafeGetInt32(reader, "DescriptionID");
+                                thisDescription.DescriptionType = Helper.SafeGetInt32(reader, "DescriptionType");
+
+
+                                //add to index map
+                                if (ProjectsFromDB.ContainsKey(projectNumber))
+                                {
+                                    if (!ProjectsFromDB[projectNumber].DescriptionContainsKey(Convert.ToString(thisDescription.DescriptionID)))
+                                    {
+
+                                        //add Description to Project
+                                        ProjectsFromDB[projectNumber].SetDescription(projectNumber, thisDescription);
+                                        Console.WriteLine("Description ID: " + thisDescription.DescriptionID + " for Project #" +
+                                                            projectNumber + " have been added to the Dictionary #" + count);
+                                    }
+                                    else
+                                    {
+                                        Program.LogNDisplay("Description ID " + thisDescription.DescriptionID + " for project" +
+                                                            projectNumber + " is already there #" + count);
+                                    }
+                                    count++;
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Program.LogNDisplay("Failed to catch Description from SQL: "+e.Message);
+                            }
+                        }
+                        sqlConnetion.Close();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Program.LogNDisplay("Could not connect to ProjectDescriptionViewKey " + e.Message);
+            }
+        }
 
         public static void LogNDisplay(string action, long elapsedTipe)
         {

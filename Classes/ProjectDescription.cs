@@ -12,7 +12,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         /// SharePoint Field : AbtKDescriptionId
         /// SharePoint Type : Number
         /// </summary>
-        public int? DescriptionID { get; set; }
+        public Int64? DescriptionID { get; set; }
         /// <summary>
         /// SharePoint Field :AbtKProjectId
         /// SharePoint Type : Lookup
