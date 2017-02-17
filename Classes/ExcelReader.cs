@@ -247,59 +247,69 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
             while ((string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value != null)
             {
                 ProjectDocuments document = new ProjectDocuments();
-                string projectNumber = (string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value;
-                try
+                if((string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value != null)
                 {
-                    //load row into memory
-                    document.DocumentName = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
-                    document.Title = (string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
-                    document.ProjectName = (string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value;
-                    document.ProjectNumber = projectNumber;
-                   // one of these fields should have an author 
-                    if((string)(excelWorksheet.Cells[row, 6] as Excel.Range).Value != null)
-                    {
-                        document.Author = (string)(excelWorksheet.Cells[row, 6] as Excel.Range).Value;
 
-                    }else if((string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value != null)
+                    string projectNumber = (string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value;
+                    try
                     {
-                        document.Author = (string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value;
+                        //load row into memory
+                        document.DocumentName = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
+                        document.Title = (string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
+                        document.ProjectName = (string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value;
+                        document.ProjectNumber = projectNumber;
+                        // one of these fields should have an author 
+                        if ((string)(excelWorksheet.Cells[row, 6] as Excel.Range).Value != null)
+                        {
+                            document.Author = (string)(excelWorksheet.Cells[row, 6] as Excel.Range).Value;
 
-                    }else if ((string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value != null)
-                    {
-                        document.Author = (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
+                        }
+                        else if ((string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value != null)
+                        {
+                            document.Author = (string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value;
+
+                        }
+                        else if ((string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value != null)
+                        {
+                            document.Author = (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
+                        }
+
+                        document.DocumentDate = (DateTime)(excelWorksheet.Cells[row, 9] as Excel.Range).Value;
+                        document.DocumentID = (Int32)(excelWorksheet.Cells[row, 13] as Excel.Range).Value;
+
                     }
-                    
-                    document.DocumentDate = Convert.ToDateTime((string)(excelWorksheet.Cells[row, 9] as Excel.Range).Value);
-                    document.DocumentID = (Int32)(excelWorksheet.Cells[row, 13] as Excel.Range).Value;
-                  
-                }
-                catch (Exception e)
-                {
-                    Program.LogNDisplay("Failed to read Excel. Document at line #" + row + "\n Message: " + e.Message);
-                }
-
-                //reconcile against the DB
-                if (Program.ProjectsFromDB.ContainsKey(projectNumber))
-                {
-                    //find description project
-                    if (!Program.ProjectsFromDB[projectNumber].DescriptionContainsKey(Convert.ToString(document.DocumentID)))
+                    catch (Exception e)
                     {
-                        //compare
-                        Projects value = Program.ProjectsFromDB[projectNumber];
-                        if (value.GetDescription(projectNumber).ProjectNumber.Equals(document.ProjectNumber))
+                        Program.LogNDisplay("Failed to read Excel. Document at line #" + row + "\n Message: " + e.Message);
+                    }
+
+                    //reconcile against the DB
+                    if (Program.ProjectsFromDB.ContainsKey(projectNumber))
+                    {
+                        //find description project
+                        if (!Program.ProjectsFromDB[projectNumber].DescriptionContainsKey(Convert.ToString(document.DocumentID)))
                         {
-                            Console.WriteLine("Description: " + document.DocumentID + " AbtName: " + document.ProjectName + "  #" + count);
+                            //compare
+                            Projects value = Program.ProjectsFromDB[projectNumber];
+                            if (value.GetDescription(projectNumber).ProjectNumber.Equals(document.ProjectNumber))
+                            {
+                                Console.WriteLine("Document: " + document.DocumentID + " AbtName: " + document.ProjectName + "  #" + count);
+                            }
+                            else
+                            {
+                                Program.LogNDisplay("Key: " + projectNumber + " #" + count + " is not in the dictionary." +
+                                    "Projects extract line #" + row);
+                            }
                         }
-                        else
-                        {
-                            Program.LogNDisplay("Key: " + projectNumber + " #" + count + " is not in the dictionary." +
-                                "Projects extract line #" + row);
-                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Project number not found: " + projectNumber + " AbtName: " + document.ProjectName + "  #" + count);
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Project number not found: " + projectNumber + " AbtName: " + document.ProjectName + "  #" + count);
+                    Console.WriteLine("Document in line #"+ count +" did not have a project number");
                 }
 
 
