@@ -11,6 +11,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         public string ProjectNumber{ get; set; }
         public int? ProposalsID { get; set; }
         public string ProposalName { get; set; }
+        public string ProjectName { get; set; }
         public string ProposalTitle { get; set; }
         public DateTime? DueDate { get; set; }
         public DateTime? LastUpDate { get; set; }
@@ -47,7 +48,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         public string MVTitle { get; set; }
         public string MMG { get; set; }
         public Int32? OracleProjectNumber { get; set; }
-        public int? ProposalID { get; set; }
+        public Int32? ProposalID { get; set; }
         public Int32? OracleProposalNumber { get; set; }
     
     }
