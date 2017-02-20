@@ -46,14 +46,14 @@ namespace AbtK2KnowledgeHub_OneTime
                     return;
                 }
                 //Projects
-                program.ReadProjectsFromSQL();
-                program.ReadProjectDescriptionFromSQL();
-                program.ReadProjectDocumentsFromSQL();
+               // program.ReadProjectsFromSQL();
+               // program.ReadProjectDescriptionFromSQL();
+               // program.ReadProjectDocumentsFromSQL();
 
                 //sharepoint extract
-                ExcelReader.ReadConfig("Projects", "Projects");
-                ExcelReader.ReadConfig("Descriptions", "Descriptions");
-                ExcelReader.ReadConfig("Documents", "Documents");
+               // ExcelReader.ReadConfig("Projects", "Projects");
+               // ExcelReader.ReadConfig("Descriptions", "Projects");
+                ExcelReader.ReadConfig("Documents", "Projects");
 
                 //Proposals
                 program.ReadProposalsFromSQL();
@@ -276,17 +276,17 @@ namespace AbtK2KnowledgeHub_OneTime
                             //add to index map
                             if (ProjectsFromDB.ContainsKey(projectNumber))
                             {
-                                if (!ProjectsFromDB[projectNumber].DocumentContainsKey(Convert.ToString(thisDocument.DocumentID)))
+                                if (!ProjectsFromDB[projectNumber].DocumentContainsKey(Convert.ToString(thisDocument.DocumentName)))
                                 {
 
                                     //add Description to Project
                                     ProjectsFromDB[projectNumber].SetDocuments(projectNumber, thisDocument);
-                                    Program.LogNDisplay("Document ID: " + thisDocument.DocumentID + " for Project #" +
+                                    Program.LogNDisplay("Document ID: " + thisDocument.DocumentID+ "_" +thisDocument.DocumentName + " for Project #" +
                                                         projectNumber + " have been added to the Dictionary #" + count);
                                 }
                                 else
                                 {
-                                    Program.LogNDisplay("Document ID " + thisDocument.DocumentID + " for project" +
+                                    Program.LogNDisplay("Document ID " + thisDocument.DocumentID + "_" + thisDocument.DocumentName+ " for project" +
                                                         projectNumber + " is already there #" + count);
                                 }
                                 count++;
