@@ -38,5 +38,8 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         public string ProjectNumber { get; set; }
         public string ProjectName { get; set; }
         public string DocumentName { get; set; }
+
+
+        public string FileSize { get; set; }
     }
 }

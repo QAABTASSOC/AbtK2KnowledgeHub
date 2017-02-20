@@ -60,7 +60,6 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
             {
                 result = DocumentsDictionary[key];
             }
-
             return result;
         }
         public bool DocumentContainsKey(string key)

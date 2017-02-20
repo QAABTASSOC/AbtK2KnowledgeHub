@@ -46,23 +46,22 @@ namespace AbtK2KnowledgeHub_OneTime
                     return;
                 }
                 //Projects
-               // program.ReadProjectsFromSQL();
-               // program.ReadProjectDescriptionFromSQL();
-               // program.ReadProjectDocumentsFromSQL();
+                program.ReadProjectsFromSQL();
+                program.ReadProjectDescriptionFromSQL();
+              //  program.ReadProjectDocumentsFromSQL();
 
                 //sharepoint extract
                // ExcelReader.ReadConfig("Projects", "Projects");
-               // ExcelReader.ReadConfig("Descriptions", "Projects");
-                ExcelReader.ReadConfig("Documents", "Projects");
+                ExcelReader.ReadConfig("Descriptions", "Projects");
+              //  ExcelReader.ReadConfig("Documents", "Projects");
 
                 //Proposals
-                program.ReadProposalsFromSQL();
+                //program.ReadProposalsFromSQL();
 
                 //sharedpoint extract
-                ExcelReader.ReadConfig("Proposals", "Proposals and Repcap extract");
+               // ExcelReader.ReadConfig("Proposals", "Proposals and Repcap extract");
 
-
-                Console.WriteLine("Import is complete. Press any key to exit.");
+                Console.WriteLine("Validation is complete. Press any key to exit.");
                 Console.ReadKey();
             }
             catch (Exception ex)
@@ -212,7 +211,7 @@ namespace AbtK2KnowledgeHub_OneTime
                                     {
 
                                         //add Description to Project
-                                        ProjectsFromDB[projectNumber].SetDescription(projectNumber, thisDescription);
+                                        ProjectsFromDB[projectNumber].SetDescription(Convert.ToString(thisDescription.DescriptionID), thisDescription);
                                         Program.LogNDisplay("Description ID: " + thisDescription.DescriptionID + " for Project #" +
                                                             projectNumber + " have been added to the Dictionary #" + count);
                                     }
@@ -263,24 +262,27 @@ namespace AbtK2KnowledgeHub_OneTime
                                     ProjectDocuments thisDocument = new ProjectDocuments();        
                                     projectNumber = Helper.SafeGetString(reader, "ProjectNumber");
                                     fileName = Helper.SafeGetString(reader, "UploadedFileName");
-                                    documentTitle = Helper.SafeGetString(reader, "Title");
-
+                           string serverfileName = Helper.SafeGetString(reader, "ServerFileName");
+                            documentTitle = Helper.SafeGetString(reader, "Title");
+                                    
+                                   thisDocument.FileSize = Helper.SafeGetString(reader, "FileSize");
                                     thisDocument.DocumentID = Helper.SafeGetInt32(reader, "FilesID");
                                     thisDocument.Title  = String.IsNullOrEmpty(documentTitle) ? "" : StringExt.Truncate(documentTitle, 255);
                                     thisDocument.ProjectNumber = projectNumber;
                                     thisDocument.DocumentName = fileName;
-                                    thisDocument.Author = Helper.SafeGetString(reader, "Author");
+                      
+                            thisDocument.Author = Helper.SafeGetString(reader, "Author");
                                     thisDocument.ProjectsID = Helper.SafeGetInt32(reader, "ProjectsID");
                                     thisDocument.DocumentDate = Helper.SafeGetDateTime(reader, "FileDate");
 
                             //add to index map
-                            if (ProjectsFromDB.ContainsKey(projectNumber))
+                            if (ProjectsFromDB.ContainsKey(thisDocument.ProjectNumber))
                             {
-                                if (!ProjectsFromDB[projectNumber].DocumentContainsKey(Convert.ToString(thisDocument.DocumentName)))
+                                if (!ProjectsFromDB[projectNumber].DocumentContainsKey(thisDocument.DocumentName))
                                 {
 
                                     //add Description to Project
-                                    ProjectsFromDB[projectNumber].SetDocuments(projectNumber, thisDocument);
+                                    ProjectsFromDB[projectNumber].SetDocuments(thisDocument.DocumentName, thisDocument);
                                     Program.LogNDisplay("Document ID: " + thisDocument.DocumentID+ "_" +thisDocument.DocumentName + " for Project #" +
                                                         projectNumber + " have been added to the Dictionary #" + count);
                                 }

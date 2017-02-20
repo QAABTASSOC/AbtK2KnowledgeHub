@@ -155,7 +155,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                     Projects value = Program.ProjectsFromDB[projectNumber];
                     if (project.ProjectNumber.Equals(value.ProjectNumber))
                     {
-                        Console.WriteLine("Project: " + value.ProjectNumber + " AbtName: " + value.ProjectName + "  #" + count);
+                        Program.CleanLogNDisplay("Project: " + value.ProjectNumber + " AbtName: " + value.ProjectName + "  #" + count);
                     }
                 }
                 else
@@ -216,29 +216,33 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                 //reconcile against the DB
                 if (Program.ProjectsFromDB.ContainsKey(projectNumber))
                 {
-                    //find description project
-                    if (!Program.ProjectsFromDB[projectNumber].DescriptionContainsKey(Convert.ToString(description.DescriptionID)))
+                    try
                     {
+                        //find description project
+
                         //compare
                         Projects value = Program.ProjectsFromDB[projectNumber];
-                        if (value.GetDescription(projectNumber).ProjectNumber.Equals(description.ProjectNumber))
+                        if (value.GetDescription(Convert.ToString(description.DescriptionID)).ProjectNumber.Equals(description.ProjectNumber))
                         {
-                            Console.WriteLine("Description: " + description.DescriptionID + " AbtName: " + description.ProjectName + "  #" + count);
+                            Program.CleanLogNDisplay("Project Description: " + description.DescriptionID + "_" + description.Title +
+                                " Project Number_Name " + projectNumber + "_" + description.ProjectName + "  #" + count + "in row #" + row);
                         }
                         else
                         {
-                            Program.LogNDisplay("Key: " + projectNumber + " #" + count + " is not in the dictionary." +
-                                "Projects extract line #" + row);
+                            Program.LogNDisplay("Project Description: " + description.DescriptionID + "_" + description.Title + " #" + count + " is not in the dictionary." +
+                                "Project Number_Name " + projectNumber + "_" + description.ProjectName + "ProjectDescription extract line #" + row);
+
                         }
+                    }catch (Exception e)
+                    {
+                        Program.LogNDisplay("Project Description: " + description.DescriptionID + "_" + description.Title + " #" + count + " is not in the dictionary." +
+                                                        "Project Number_Name " + projectNumber + "_" + description.ProjectName + "ProjectDescription extract line #" + row);
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Project number not found: " + projectNumber + " AbtName: " + description.ProjectName + "  #" + count);
+                    Program.LogNDisplay("Project number not found: " + projectNumber + " AbtName: " + description.ProjectName + "  #" + count);
                 }
-
-
-
                 count++;
                 row++;
             }
@@ -265,23 +269,26 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                         document.ProjectName = (string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
                         document.ProjectNumber = projectNumber;
                         // one of these fields should have an author 
-                        if ((string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value != null)
+                        if ((string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value != null &&
+                            (string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value != "")
                         {
                             document.Author = (string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value;
 
                         }
-                        else if ((string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value != null)
+                        else if ((string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value != null &&
+                            (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value != "")
                         {
                             document.Author = (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
 
                         }
-                        else if ((string)(excelWorksheet.Cells[row, 9] as Excel.Range).Value != null)
+                        else if ((string)(excelWorksheet.Cells[row, 9] as Excel.Range).Value != null &&
+                            (string)(excelWorksheet.Cells[row, 9] as Excel.Range).Value != "")
                         {
                             document.Author = (string)(excelWorksheet.Cells[row, 9] as Excel.Range).Value;
                         }
 
                         document.DocumentDate = (DateTime)(excelWorksheet.Cells[row, 10] as Excel.Range).Value;
-                      //  document.DocumentID = (Int32)(excelWorksheet.Cells[row, 13] as Excel.Range).Value;
+                        document.FileSize =Convert.ToString( (double)(excelWorksheet.Cells[row, 21] as Excel.Range).Value);
 
                     }
                     catch (Exception e)
@@ -292,30 +299,40 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                     //reconcile against the DB
                     if (Program.ProjectsFromDB.ContainsKey(projectNumber))
                     {
-                        //find description project
-                        if (!Program.ProjectsFromDB[projectNumber].DocumentContainsKey(Convert.ToString(document.DocumentName)))
+                        try
                         {
-                            //compare
-                            Projects value = Program.ProjectsFromDB[projectNumber];
-                            if (value.GetDescription(projectNumber).ProjectNumber.Equals(document.ProjectNumber))
+                            //find description project
+                            if (Program.ProjectsFromDB[projectNumber].DocumentContainsKey(document.DocumentName))
                             {
-                                Console.WriteLine("Document Name: " + document.DocumentName + " Project Number_Name: " + document.ProjectNumber+ "_"+document.ProjectName + "  #" + count);
+                                //compare
+                                Projects value = Program.ProjectsFromDB[projectNumber];
+                                if (value.GetDocuments(document.DocumentName).ProjectNumber != null && 
+                                    value.GetDocuments(document.DocumentName).ProjectNumber.Equals(document.ProjectNumber))
+                                {
+                                    //if (value.GetDocuments(document.DocumentName).FileSize.Equals(document.FileSize)) { }
+                                    Program.CleanLogNDisplay("Document Name: " + document.DocumentName + " Project Number_Name: " + document.ProjectNumber + "_" + document.ProjectName + "  #" + count);
+                                }
+                                else
+                                {
+                                    Program.LogNDisplay("Document Name: " + document.DocumentName + "for Project Number_Name: " + document.ProjectNumber + "_" + document.ProjectName +
+                                        " is not in the dictionary. " + "Review Projects extract in line #" + row);
+                                }
                             }
-                            else
-                            {
-                                Program.LogNDisplay("Document Name: " + document.DocumentName + "for Project Number_Name: " + document.ProjectNumber + "_" + document.ProjectName+
-                                    " is not in the dictionary. " + "Review Projects extract in line #" + row);
-                            }
+                        }catch(Exception e)
+                        {
+                            Program.LogNDisplay("Document Name: " + document.DocumentName + "for Project Number_Name: " + document.ProjectNumber + "_" + document.ProjectName +
+                                       " is not in the dictionary. " + "Review Projects extract in line #" + row);
                         }
+             
                     }
                     else
                     {
-                        Console.WriteLine(" Project Number_Name not found: " + document.ProjectNumber + "_" + document.ProjectName  + " not found for Document Name: " + document.DocumentName + "  #" + count);
+                        Program.LogNDisplay(" Project Number_Name not found: " + document.ProjectNumber + "_" + document.ProjectName  + " not found for Document Name: " + document.DocumentName + "  #" + count);
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Document in row #"+ row +" did not have a project number");
+                    Program.LogNDisplay("Document in row #"+ row +" did not have a project number");
                 }
 
 
