@@ -1,15 +1,8 @@
 ﻿using AbtK2KnowledgeHub_OneTime.Classes;
-using Microsoft.SharePoint.Client;
-using Microsoft.SharePoint.Client.Taxonomy;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading;
 
 namespace AbtK2KnowledgeHub_OneTime
 {
@@ -33,7 +26,7 @@ namespace AbtK2KnowledgeHub_OneTime
         public static Dictionary<string, string> ignoredRecords = new Dictionary<string, string>();
         public static Dictionary<string, Projects> ProjectsFromDB = new Dictionary<string, Projects>();
         public static Dictionary<string, Proposals> ProposalsFromDB = new Dictionary<string, Proposals>();
-
+        public static Dictionary<string, RepCapDocuments> RepCapFromDB = new Dictionary<string, RepCapDocuments>();
 
         static void Main(string[] args)
         {
@@ -56,11 +49,17 @@ namespace AbtK2KnowledgeHub_OneTime
               //  ExcelReader.ReadConfig("Documents");
 
                 //Proposals
-                program.ReadProposalsFromSQL();
-                program.ReadProposalDocumentsFromSQL();
+               // program.ReadProposalsFromSQL();
+               // program.ReadProposalDocumentsFromSQL();
                 //sharedpoint extract
-                ExcelReader.ReadConfig("Proposals");
-                ExcelReader.ReadConfig("ProposalsDocuments");
+               // ExcelReader.ReadConfig("Proposals");
+              //  ExcelReader.ReadConfig("ProposalsDocuments");
+
+                //RepCap
+                program.ReadRepcapDocuments();
+
+                //sharedpoint extract
+                ExcelReader.ReadConfig("RepCapDocuments");
 
                 Console.WriteLine("Validation is complete. Press any key to exit.");
                 Console.ReadKey();
@@ -324,11 +323,6 @@ namespace AbtK2KnowledgeHub_OneTime
                     {
                         try
                         {
-                            if (count == 9617)
-                            {
-                                string projectNumber5 = Helper.SafeGetString(reader, "ProjectNumber");
-                            }
-
                            
                             Proposals thisProposal = new Proposals();
                             string projectNumber = Helper.SafeGetString(reader, "ProjectNumber");
@@ -358,7 +352,7 @@ namespace AbtK2KnowledgeHub_OneTime
                             thisProposal.Client = Helper.SafeGetString(reader, "Client");
 
 
-                            thisProposal.AgreementTrackNumber = Helper.SafeGetDecimal(reader, "AgreementTrackNumber");
+                           // thisProposal.AgreementTrackNumber = Helper.SafeGetDecimal(reader, "AgreementTrackNumber");
                             //    thisProject.ProjectComments = Helper.SafeGetString(reader, "ProjectComments");
                             //  thisProject.ContractValue = Helper.SafeGetDecimal(reader, "ContractValue");
 
@@ -369,7 +363,7 @@ namespace AbtK2KnowledgeHub_OneTime
                             thisProposal.Division = GetDivision(Helper.SafeGetString(reader, "Division"));
                             thisProposal.Practice = GetPractice(Helper.SafeGetString(reader, "Practice"));
                             thisProposal.FederalAgency = Helper.SafeGetString(reader, "FederalAgency");
-                            thisProposal.AgreementTrackNumber = Helper.SafeGetInt64(reader, "AgreementTrackNumber");
+                           // thisProposal.AgreementTrackNumber = Helper.SafeGetInt64(reader, "AgreementTrackNumber");
                             thisProposal.MMG = Helper.SafeGetString(reader, "MMG");
                             thisProposal.ProposalWinStatus = Helper.SafeGetString(reader, "WinStatus");
                            // thisProposal.NoDocumentSubmitteds = Convert.ToBoolean(Helper.SafeGetBool(reader, "NoDocumentSubmitted")) ? true : false;
@@ -378,15 +372,15 @@ namespace AbtK2KnowledgeHub_OneTime
                             //Is Active ? (Y / N)  Yes
                            // thisProposal.IsPrimeText = (bool)thisProposal.IsActive ? "Yes" : "No";
 
-                            if (thisProposal.IsActive.HasValue)
-                                thisProposal.IsActiveText = thisProposal.IsActive.HasValue ? "Yes" : "No";
-                            else
-                                thisProposal.IsActiveText = "No";
+                            //if (thisProposal.IsActive.HasValue)
+                            //    thisProposal.IsActiveText = thisProposal.IsActive.HasValue ? "Yes" : "No";
+                            //else
+                            //    thisProposal.IsActiveText = "No";
 
-                            if (thisProposal.IsGoodExample.HasValue)
-                                thisProposal.IsGoodExampleText = thisProposal.IsGoodExample.Value ? "Yes" : "No";
-                            else
-                                thisProposal.IsGoodExampleText = "Not Known";
+                            //if (thisProposal.IsGoodExample.HasValue)
+                            //    thisProposal.IsGoodExampleText = thisProposal.IsGoodExample.Value ? "Yes" : "No";
+                            //else
+                            //    thisProposal.IsGoodExampleText = "Not Known";
 
                             //add to index map
                             if (!ProposalsFromDB.ContainsKey(thisProposal.ProposalNumber))
@@ -432,10 +426,10 @@ namespace AbtK2KnowledgeHub_OneTime
                                     document.ProposalNumber = Helper.SafeGetString(reader, "ProposalNumber");
                                     document.DocumentName = Helper.SafeGetString(reader, "UploadedFileName");
                                     document.Author = Helper.SafeGetString(reader, "Author");
-                            // string title = Helper.SafeGetString(reader, "Title");
-                            document.Title = Helper.SafeGetString(reader, "Title");
-                            document.DocumentDate = Helper.SafeGetDateTime(reader, "FileDate");
-                                  //  document.Title = String.IsNullOrEmpty(title) ? "" : StringExt.Truncate(title, 255);
+                                     // string title = Helper.SafeGetString(reader, "Title");
+                                    document.Title = Helper.SafeGetString(reader, "Title");
+                                    document.DocumentDate = Helper.SafeGetDateTime(reader, "FileDate");
+                                   //  document.Title = String.IsNullOrEmpty(title) ? "" : StringExt.Truncate(title, 255);
 
 
                             if (ProposalsFromDB.ContainsKey(document.ProposalNumber))
@@ -471,8 +465,66 @@ namespace AbtK2KnowledgeHub_OneTime
                         }
                     }
                 }
-            
-        
+
+        public void ReadRepcapDocuments()
+        {
+            Console.WriteLine("Begin reading RepCap documents");
+            try
+            {
+               using (SqlConnection sqlConnetion = new SqlConnection(Helper.GetConnectionString(Constants.ConnectionStringKey)))
+                    {
+                        string queryStatement = "SELECT * FROM " + Helper.GetAppSettingValue(Constants.RepcapDocumentsListKey) + " order by pub_id";
+
+                        using (SqlCommand command = new SqlCommand(queryStatement, sqlConnetion))
+                        {
+                            sqlConnetion.Open();
+                            SqlDataReader reader = command.ExecuteReader();
+                            int count = 0; 
+                            while (reader.Read())
+                            {
+                                try
+                                {
+                                RepCapDocuments repcap = new RepCapDocuments();
+                                repcap.RepCapDocumentID = Helper.SafeGetInt32(reader, "pub_id");
+
+
+                                repcap.DocumentName = Helper.SafeGetString(reader, "uploadedfilename");
+                                repcap.Description =  Helper.SafeGetString(reader, "description");
+
+
+                                if (repcap.RepCapDocumentID == 2870)
+                                {
+                                    Console.WriteLine(repcap.DocumentName);
+                                }
+
+                                if (!RepCapFromDB.ContainsKey(repcap.DocumentName))
+                                {
+                                    RepCapFromDB.Add(repcap.DocumentName, repcap);
+                                    Program.CleanLogNDisplay("RepCap Document: " + repcap.DocumentName + " with Repcap id " +
+                                                       repcap.RepCapDocumentID + " have been added to the Dictionary # " + count);
+                                }
+                                else
+                                {
+                                    Program.LogNDisplay("RepCap Document: " + repcap.DocumentName + " with Repcap id " +
+                                                       repcap.RepCapDocumentID + " have been already processed, row # " + count);
+                                }
+                                }
+                                catch (Exception e)
+                                {
+                                Program.LogNDisplay("Error reading sql RepCap Documents: " + e.Message);
+                                }
+
+                            count++;
+                            }
+                            sqlConnetion.Close();
+                        }
+                    }
+                }
+            catch (Exception e)
+            {
+                Program.LogNDisplay("Error connecting to DB, RepCap " + e.Message);
+            }
+        }
 
         public static void LogNDisplay(string action, long elapsedTipe)
         {

@@ -70,6 +70,7 @@
     <Compile Include="Classes\ProjectDocuments.cs" />
     <Compile Include="Classes\Projects.cs" />
     <Compile Include="Classes\ProjectTags.cs" />
+    <Compile Include="Classes\RepCapDocuments.cs" />
     <Compile Include="Classes\ProposalDocuments.cs" />
     <Compile Include="Classes\Proposals.cs" />
     <Compile Include="Classes\Staff.cs" />

@@ -23,6 +23,11 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
             {   //TO USE EXCEL: PUT THE PATH IN THE LINE BELOW
                 switch (type)
                 {
+                    case "RepCapDocuments":
+                        excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\RepCap.xlsx", true, true);
+                        excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("RepCapDocuments");
+                        break;
+
                     case "Proposals":
                         excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\Proposals.xlsx", true, true);
                         excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("Proposals");
@@ -80,7 +85,12 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
 
                 case "ProposalsDocuments":
                     LoadSharePointProposalDocumentsExtract();
-                    Program.LogNDisplay("\n Finished Loading Sharepoint Proposals \n");
+                    Program.LogNDisplay("\n Finished Loading Sharepoint Proposals Documents \n");
+                    break;
+
+                case "RepCapDocuments":
+                    LoadSharePointRepCapDocumentsExtract();
+                    Program.LogNDisplay("\n Finished Loading Sharepoint RepCap files \n");
                     break;
             }
 
@@ -361,7 +371,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
             {
                 Proposals proposal = new Proposals();
                 string proposalNumber = (string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value;
-                int proposalID = (int)(excelWorksheet.Cells[row, 26] as Excel.Range).Value;
+               // int proposalID = (int)(excelWorksheet.Cells[row, 26] as Excel.Range).Value;
                 try
                 {
                     //load row into memory
@@ -379,15 +389,15 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                     proposal.Division = (string)(excelWorksheet.Cells[row, 20] as Excel.Range).Value;
                     proposal.Practice = (string)(excelWorksheet.Cells[row, 21] as Excel.Range).Value;
                     proposal.ProposalManager = (string)(excelWorksheet.Cells[row, 22] as Excel.Range).Value;
-                    proposal.ProposalID = proposalID;
+                   // proposal.ProposalID = proposalID;
                     //if (((string)(excelWorksheet.Cells[row, 31] as Excel.Range).Value).ToUpper().Equals("YES"))
                     //    proposal.IsActive = true;
                     //else
                     //    proposal.IsActive = false;
 
 
-                    proposal.FederalAgency = (string)(excelWorksheet.Cells[row, 33] as Excel.Range).Value;
-                    proposal.MMG = (string)(excelWorksheet.Cells[row, 34] as Excel.Range).Value;
+                   // proposal.FederalAgency = (string)(excelWorksheet.Cells[row, 33] as Excel.Range).Value;
+                   // proposal.MMG = (string)(excelWorksheet.Cells[row, 34] as Excel.Range).Value;
 
                 }
                 catch (Exception e)
@@ -399,10 +409,15 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                 if (Program.ProposalsFromDB.ContainsKey(proposal.ProposalNumber))
                 {
                     Proposals value = Program.ProposalsFromDB[proposal.ProposalNumber];
-                    if (proposal.ProposalNumber.Equals(value.ProposalNumber) &&
-                        proposal.ProposalName.Equals(value.ProposalName))
+                    if (!value.ProposalName.Equals("") && value.ProposalName != null)
                     {
-                        Program.CleanLogNDisplay("Proposal: " + proposal.ProposalNumber + " Proposal Name: " + value.ProposalName + "  #" + count);
+                        if (proposal.ProposalNumber.Equals(value.ProposalNumber) &&
+                            proposal.ProposalName.Equals(value.ProposalName))
+                        {
+                            Program.CleanLogNDisplay("Proposal: " + proposal.ProposalNumber + " Proposal Name: " + value.ProposalName + "  #" + count);
+                        }
+                    }else{
+                        Program.LogNDisplay("Proposal: " + proposal.ProposalNumber + "does not have a Proposal Name Associated  #" + row);
                     }
                 }
                 else
@@ -505,6 +520,65 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                 }
                 count++;
                 row++;
+            }
+        }
+        public static void LoadSharePointRepCapDocumentsExtract()
+        {
+            int count = 1;
+            int row = 2;
+
+            Program.LogNDisplay("\n Begin Loading Sharepoint RepCap Documents \n");
+
+            while ((string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value != null)
+            {
+                RepCapDocuments repcap = new RepCapDocuments();
+                if ((string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value != null)
+                {
+
+                    string proposalsNumber = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
+                    try
+                    {
+                        //load row into memory
+                        repcap.DocumentName = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
+                        repcap.DocumentDate = (DateTime)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
+                        repcap.RepCapDocumentID = Convert.ToInt32((string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value);
+
+                    }
+                    catch (Exception e)
+                    {
+                        Program.LogNDisplay("Failed to read Excel. Document in the row #" + row + "\n Message: " + e.Message);
+                    }
+
+                    //reconcile against the DB
+                    if (Program.RepCapFromDB.ContainsKey(repcap.DocumentName))
+                    {
+                        try
+                        {   //find description project
+                            if (Program.RepCapFromDB[repcap.DocumentName].RepCapDocumentID.Equals(repcap.RepCapDocumentID) &&
+                              Program.RepCapFromDB[repcap.DocumentName].DocumentName.Equals(repcap.DocumentName))
+                            {
+                                    //if (value.GetDocuments(document.DocumentName).FileSize.Equals(document.FileSize)) { }
+                                    Program.CleanLogNDisplay("RepCap Name: " + repcap.DocumentName + " RepCap ID: " + repcap.RepCapDocumentID  + "  #" + count);
+                                }
+                                else
+                                {
+                                    Program.LogNDisplay("RepCap Name: " + repcap.DocumentName + " RepCap ID: " + repcap.RepCapDocumentID +
+                                        " is not in the dictionary. Review Projects extract in line #" + row);
+                                }
+                            }
+                        catch (Exception e)
+                        {
+                            Program.LogNDisplay("Error Searching for RepCap Name: " + repcap.DocumentName + " RepCap ID: " + repcap.RepCapDocumentID  + "  #" + count +
+                                       " is not in the dictionary.");
+                        }
+
+                    }else
+                    {
+                        Program.LogNDisplay("Error  RepCap Name: " + repcap.DocumentName + " RepCap ID: " + repcap.RepCapDocumentID + "  #" + count+"have been processed" );
+                    }
+                    count++;
+                    row++;
+                }               
             }
         }
 
