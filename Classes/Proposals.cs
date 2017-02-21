@@ -8,6 +8,38 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
 {
     class Proposals
     {
+
+        public Dictionary<string, ProposalDocuments> DocumentsDictionary = new Dictionary<string, ProposalDocuments>();
+        public void SetDocuments(string key, ProposalDocuments value)
+        {
+            if (DocumentsDictionary.ContainsKey(key))
+            {
+                DocumentsDictionary[key] = value;
+            }
+            else
+            {
+                DocumentsDictionary.Add(key, value);
+            }
+        }
+        public ProposalDocuments GetDocuments(string key)
+        {
+            ProposalDocuments result = null;
+
+            if (DocumentsDictionary.ContainsKey(key))
+            {
+                result = DocumentsDictionary[key];
+            }
+            return result;
+        }
+        public bool DocumentContainsKey(string key)
+        {
+            if (DocumentsDictionary.ContainsKey(key))
+            {
+                return true;
+            }
+            else { return false; }
+        }
+
         public string ProjectNumber{ get; set; }
         public int? ProposalsID { get; set; }
         public string ProposalName { get; set; }

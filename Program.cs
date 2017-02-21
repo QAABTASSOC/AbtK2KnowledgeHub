@@ -32,7 +32,7 @@ namespace AbtK2KnowledgeHub_OneTime
 
         public static Dictionary<string, string> ignoredRecords = new Dictionary<string, string>();
         public static Dictionary<string, Projects> ProjectsFromDB = new Dictionary<string, Projects>();
-        public static Dictionary<Int32, Proposals> ProposalsFromDB = new Dictionary<Int32, Proposals>();
+        public static Dictionary<string, Proposals> ProposalsFromDB = new Dictionary<string, Proposals>();
 
 
         static void Main(string[] args)
@@ -46,20 +46,21 @@ namespace AbtK2KnowledgeHub_OneTime
                     return;
                 }
                 //Projects
-                program.ReadProjectsFromSQL();
-                program.ReadProjectDescriptionFromSQL();
-              //  program.ReadProjectDocumentsFromSQL();
+               // program.ReadProjectsFromSQL();
+               // program.ReadProjectDescriptionFromSQL();
+                //program.ReadProjectDocumentsFromSQL();
 
                 //sharepoint extract
-               // ExcelReader.ReadConfig("Projects", "Projects");
-                ExcelReader.ReadConfig("Descriptions", "Projects");
-              //  ExcelReader.ReadConfig("Documents", "Projects");
+               // ExcelReader.ReadConfig("Projects");
+               // ExcelReader.ReadConfig("Descriptions");
+              //  ExcelReader.ReadConfig("Documents");
 
                 //Proposals
-                //program.ReadProposalsFromSQL();
-
+                program.ReadProposalsFromSQL();
+                program.ReadProposalDocumentsFromSQL();
                 //sharedpoint extract
-               // ExcelReader.ReadConfig("Proposals", "Proposals and Repcap extract");
+                ExcelReader.ReadConfig("Proposals");
+                ExcelReader.ReadConfig("ProposalsDocuments");
 
                 Console.WriteLine("Validation is complete. Press any key to exit.");
                 Console.ReadKey();
@@ -310,7 +311,7 @@ namespace AbtK2KnowledgeHub_OneTime
         public void ReadProposalsFromSQL()
         {
             int countr = 0;
-            Console.WriteLine("Begin Reading Projects from the SQL \n");
+            Console.WriteLine("Begin Reading Proposals from the SQL \n");
             using (SqlConnection sqlConnetion = new SqlConnection(Helper.GetConnectionString(Constants.ConnectionStringKey)))
             {
                 string queryStatement = "SELECT * FROM " + Helper.GetAppSettingValue(Constants.ProposalViewKey);
@@ -323,10 +324,14 @@ namespace AbtK2KnowledgeHub_OneTime
                     {
                         try
                         {
+                            if (count == 9617)
+                            {
+                                string projectNumber5 = Helper.SafeGetString(reader, "ProjectNumber");
+                            }
 
-                            string projectNumber = Helper.SafeGetString(reader, "ProjectNumber");
+                           
                             Proposals thisProposal = new Proposals();
-
+                            string projectNumber = Helper.SafeGetString(reader, "ProjectNumber");
                             //"ProposalOracleNumber"] = proposalNumber;
                             //"ProposalAbtkId"] = proposalId;
                             thisProposal.ProjectNumber = projectNumber;
@@ -349,7 +354,7 @@ namespace AbtK2KnowledgeHub_OneTime
                             thisProposal.ProposalComments = Helper.SafeGetString(reader, "ProposalComment");
                             thisProposal.Summary = Helper.SafeGetString(reader, "ProposalSummary");
                             thisProposal.ProposalWorth = Helper.SafeGetDecimal(reader, "ProposalWorth");
-                            thisProposal.ProposalHasWon = Convert.ToBoolean(Helper.SafeGetBool(reader, "HasWon")) ? true : false;
+                           // thisProposal.ProposalHasWon = Convert.ToBoolean(Helper.SafeGetBool(reader, "HasWon")) ? true : false;
                             thisProposal.Client = Helper.SafeGetString(reader, "Client");
 
 
@@ -358,7 +363,7 @@ namespace AbtK2KnowledgeHub_OneTime
                             //  thisProject.ContractValue = Helper.SafeGetDecimal(reader, "ContractValue");
 
                             thisProposal.UltimateClient = Helper.SafeGetString(reader, "UltimateClient");
-                            thisProposal.AgreementID = Helper.SafeGetInt64(reader, "AgreementID");
+                           // thisProposal.AgreementID = Helper.SafeGetInt64(reader, "AgreementID");
                             thisProposal.AgreementName = Helper.SafeGetString(reader, "AgreementName");
                             thisProposal.AgreementType = Helper.SafeGetString(reader, "AgreementType");
                             thisProposal.Division = GetDivision(Helper.SafeGetString(reader, "Division"));
@@ -367,11 +372,11 @@ namespace AbtK2KnowledgeHub_OneTime
                             thisProposal.AgreementTrackNumber = Helper.SafeGetInt64(reader, "AgreementTrackNumber");
                             thisProposal.MMG = Helper.SafeGetString(reader, "MMG");
                             thisProposal.ProposalWinStatus = Helper.SafeGetString(reader, "WinStatus");
-                            thisProposal.NoDocumentSubmitteds = Convert.ToBoolean(Helper.SafeGetBool(reader, "NoDocumentSubmitted")) ? true : false;
-                            thisProposal.IsPrime = Convert.ToBoolean(Helper.SafeGetBool(reader, "IsPrime")) ? true : false;
+                           // thisProposal.NoDocumentSubmitteds = Convert.ToBoolean(Helper.SafeGetBool(reader, "NoDocumentSubmitted")) ? true : false;
+                          //  thisProposal.IsPrime = Convert.ToBoolean(Helper.SafeGetBool(reader, "IsPrime")) ? true : false;
 
                             //Is Active ? (Y / N)  Yes
-                            thisProposal.IsPrimeText = (bool)thisProposal.IsActive ? "Yes" : "No";
+                           // thisProposal.IsPrimeText = (bool)thisProposal.IsActive ? "Yes" : "No";
 
                             if (thisProposal.IsActive.HasValue)
                                 thisProposal.IsActiveText = thisProposal.IsActive.HasValue ? "Yes" : "No";
@@ -384,14 +389,15 @@ namespace AbtK2KnowledgeHub_OneTime
                                 thisProposal.IsGoodExampleText = "Not Known";
 
                             //add to index map
-                            if (!ProposalsFromDB.ContainsKey((int)thisProposal.ProposalsID))
+                            if (!ProposalsFromDB.ContainsKey(thisProposal.ProposalNumber))
                             {
-                                 ProposalsFromDB.Add((int)thisProposal.ProposalsID, thisProposal);
-                                Program.LogNDisplay("Proposal: "+(int)thisProposal.ProposalsID + " for the project" + projectNumber + " have been added to the Dictionary #" + count);
+                                 ProposalsFromDB.Add(thisProposal.ProposalNumber, thisProposal);
+                                Program.CleanLogNDisplay("Proposal: "+ thisProposal.ProposalNumber+"_" + thisProposal.ProposalName + " for the project"
+                                    + projectNumber + "_" + thisProposal.ProjectName + " have been added to the Dictionary #" + count);
                             }
                             else
                             {
-                                Program.LogNDisplay("the file: " + (int)thisProposal.ProposalsID + " have been previously processed #" + count);
+                                Program.LogNDisplay("Record: " + thisProposal.ProposalNumber + " have been previously processed #" + count);
                             }
                         }
                         catch(Exception e)
@@ -405,7 +411,68 @@ namespace AbtK2KnowledgeHub_OneTime
                 }
             }
         }
+        public void ReadProposalDocumentsFromSQL()
+        {
+            Console.WriteLine("\n Begin reading proposal documents \n");
+      
+                    using (SqlConnection sqlConnetion = new SqlConnection(Helper.GetConnectionString(Constants.ConnectionStringKey)))
+                    {
+                        string queryStatement = "SELECT * FROM " + Helper.GetAppSettingValue(Constants.ProposalDocumentsViewKey) + " order by ProposalNumber";
 
+                        using (SqlCommand command = new SqlCommand(queryStatement, sqlConnetion))
+                        {
+                            sqlConnetion.Open();
+                            SqlDataReader reader = command.ExecuteReader();
+                            int count = 0; 
+                            while (reader.Read())
+                            { try
+                                {
+
+                                    ProposalDocuments document = new ProposalDocuments();
+                                    document.ProposalNumber = Helper.SafeGetString(reader, "ProposalNumber");
+                                    document.DocumentName = Helper.SafeGetString(reader, "UploadedFileName");
+                                    document.Author = Helper.SafeGetString(reader, "Author");
+                            // string title = Helper.SafeGetString(reader, "Title");
+                            document.Title = Helper.SafeGetString(reader, "Title");
+                            document.DocumentDate = Helper.SafeGetDateTime(reader, "FileDate");
+                                  //  document.Title = String.IsNullOrEmpty(title) ? "" : StringExt.Truncate(title, 255);
+
+
+                            if (ProposalsFromDB.ContainsKey(document.ProposalNumber))
+                            {
+                                if (!ProposalsFromDB[document.ProposalNumber].DocumentContainsKey(document.DocumentName))
+                                {
+
+                                    //add Description to Project
+                                    ProposalsFromDB[document.ProposalNumber].SetDocuments(document.DocumentName, document);
+                                    Program.CleanLogNDisplay("Proposal Document: " +  document.DocumentName + " for Prposal #" +
+                                                        document.ProposalNumber + " have been added to the Dictionary #" + count);
+                                }
+                                else
+                                {
+                                    Program.LogNDisplay("Document ID " + document.DocumentName + " for prosal" +
+                                                       document.ProposalNumber + "_" + document.ProposalName + " is already there #" + count);
+                                }
+                            }
+                            else
+                            {
+                                Program.LogNDisplay(document.ProposalNumber + "_" + document.ProposalName + " not found there #" + count);
+                            }
+
+                        }
+
+                                catch (Exception e)
+                                {
+                                   Program.LogNDisplay("Error While reading from SQL" + count +"\n " +e.Message);
+                                }
+                        count++;
+                            }
+                            sqlConnetion.Close();
+                        }
+                    }
+                }
+            
+        
 
         public static void LogNDisplay(string action, long elapsedTipe)
         {

@@ -15,7 +15,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
 
         public static Dictionary<string, Projects> ExcelProjectsDictionary = new Dictionary<string, Projects>();
 
-        public static int ReadConfig(String type, String fileName)
+        public static int ReadConfig(String type)
         {
             excelApp = new Excel.Application();
 
@@ -23,9 +23,14 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
             {   //TO USE EXCEL: PUT THE PATH IN THE LINE BELOW
                 switch (type)
                 {
-                    case "Proposals and Repcap extract":
-                        excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\" + fileName + ".xlsx", true, true);
-                       
+                    case "Proposals":
+                        excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\Proposals.xlsx", true, true);
+                        excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("Proposals");
+                        break;
+
+                    case "ProposalsDocuments":
+                        excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\Proposals.xlsx", true, true);
+                        excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("ProposalsDocuments");
                         break;
                     case "Projects":
                         excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\Projects.xlsx", true, true);
@@ -69,9 +74,13 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                     break;
 
                 case "Proposals":
-                  //  excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("Proposals");
                     LoadSharePointProposalsExtract();
                      Program.LogNDisplay("\n Finished Loading Sharepoint Proposals \n");
+                    break;
+
+                case "ProposalsDocuments":
+                    LoadSharePointProposalDocumentsExtract();
+                    Program.LogNDisplay("\n Finished Loading Sharepoint Proposals \n");
                     break;
             }
 
@@ -352,35 +361,33 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
             {
                 Proposals proposal = new Proposals();
                 string proposalNumber = (string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value;
-                int proposalID = (int)(excelWorksheet.Cells[row, 28] as Excel.Range).Value;
+                int proposalID = (int)(excelWorksheet.Cells[row, 26] as Excel.Range).Value;
                 try
                 {
                     //load row into memory
                     proposal.ProposalNumber = proposalNumber;
                     proposal.ProposalTitle = (string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
-                    proposal.ProjectName = (string)(excelWorksheet.Cells[row, 18] as Excel.Range).Value;
-                    proposal.ProjectNumber = (string)(excelWorksheet.Cells[row, 17] as Excel.Range).Value; //17 project oracle number & 19 project number
-                    proposal.ProposalID = proposalID;
-                    proposal.ProposalManager = (string)(excelWorksheet.Cells[row, 22] as Excel.Range).Value;
                     proposal.ProposalName = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
-                    proposal.Division = (string)(excelWorksheet.Cells[row, 20] as Excel.Range).Value;
+                    proposal.Comments = (string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value;
+                    proposal.Summary = (string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value;
                     proposal.Client = (string)(excelWorksheet.Cells[row, 6] as Excel.Range).Value;
                     proposal.IsPrime = (bool)(excelWorksheet.Cells[row, 7] as Excel.Range).Value;
                     proposal.UltimateClient = (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
                     proposal.RFPNumber = (string)(excelWorksheet.Cells[row, 10] as Excel.Range).Value;
-
-                    proposal.Summary = (string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value;
+                    proposal.ProjectNumber = (string)(excelWorksheet.Cells[row, 17] as Excel.Range).Value; //17 project oracle number & 19 project number
+                    proposal.ProjectName = (string)(excelWorksheet.Cells[row, 18] as Excel.Range).Value;
+                    proposal.Division = (string)(excelWorksheet.Cells[row, 20] as Excel.Range).Value;
                     proposal.Practice = (string)(excelWorksheet.Cells[row, 21] as Excel.Range).Value;
+                    proposal.ProposalManager = (string)(excelWorksheet.Cells[row, 22] as Excel.Range).Value;
+                    proposal.ProposalID = proposalID;
+                    //if (((string)(excelWorksheet.Cells[row, 31] as Excel.Range).Value).ToUpper().Equals("YES"))
+                    //    proposal.IsActive = true;
+                    //else
+                    //    proposal.IsActive = false;
 
-                    if (((string)(excelWorksheet.Cells[row, 31] as Excel.Range).Value).ToUpper().Equals("YES"))
-                        proposal.IsActive = true;
-                    else
-                        proposal.IsActive = false;
 
-                    proposal.Comments = (string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value;
                     proposal.FederalAgency = (string)(excelWorksheet.Cells[row, 33] as Excel.Range).Value;
                     proposal.MMG = (string)(excelWorksheet.Cells[row, 34] as Excel.Range).Value;
-                   
 
                 }
                 catch (Exception e)
@@ -389,12 +396,13 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                 }
 
                 //reconcile against the DB
-                if (Program.ProposalsFromDB.ContainsKey(proposalID))
+                if (Program.ProposalsFromDB.ContainsKey(proposal.ProposalNumber))
                 {
-                    Proposals value = Program.ProposalsFromDB[proposalID];
-                    if (proposal.ProjectNumber.Equals(value.ProjectNumber))
+                    Proposals value = Program.ProposalsFromDB[proposal.ProposalNumber];
+                    if (proposal.ProposalNumber.Equals(value.ProposalNumber) &&
+                        proposal.ProposalName.Equals(value.ProposalName))
                     {
-                        Program.LogNDisplay("Proposal: " + proposalID + " AbtProposalName: " + value.ProposalName + "  #" + count);
+                        Program.CleanLogNDisplay("Proposal: " + proposal.ProposalNumber + " Proposal Name: " + value.ProposalName + "  #" + count);
                     }
                 }
                 else
@@ -407,6 +415,97 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                 row++;
             }
 
+        }
+        public static void LoadSharePointProposalDocumentsExtract()
+        {
+            int count = 1;
+            int row = 2;
+
+            Program.LogNDisplay("\n Begin Loading Sharepoint Project Documents \n");
+
+            while ((string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value != null)
+            {
+                ProposalDocuments document = new ProposalDocuments();
+                if ((string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value != null)
+                {
+
+                    string proposalsNumber = (string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
+                    try
+                    {
+                        //load row into memory
+                        document.DocumentName = (string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value;
+                        document.ProposalName = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
+                        document.ProposalNumber = proposalsNumber;
+                        // one of these fields should have an author 
+                        if ((string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value != null &&
+                            (string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value != "")
+                        {
+                            document.Author = (string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value;
+
+                        }
+                        else if ((string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value != null &&
+                            (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value != "")
+                        {
+                            document.Author = (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
+
+                        }
+                        else if ((string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value != null &&
+                            (string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value != "")
+                        {
+                            document.Author = (string)(excelWorksheet.Cells[row, 7] as Excel.Range).Value;
+                        }
+
+                        document.DocumentDate = (DateTime)(excelWorksheet.Cells[row, 6] as Excel.Range).Value;
+                       // document.FileSize = Convert.ToString((double)(excelWorksheet.Cells[row, 21] as Excel.Range).Value);
+
+                    }
+                    catch (Exception e)
+                    {
+                        Program.LogNDisplay("Failed to read Excel. Document in the row #" + row + "\n Message: " + e.Message);
+                    }
+
+                    //reconcile against the DB
+                    if (Program.ProposalsFromDB.ContainsKey(proposalsNumber))
+                    {
+                        try
+                        {
+                            //find description project
+                            if (Program.ProposalsFromDB[proposalsNumber].DocumentContainsKey(document.DocumentName))
+                            {
+                                //compare
+                                Proposals value = Program.ProposalsFromDB[proposalsNumber];
+                                if (value.GetDocuments(document.DocumentName).ProposalNumber != null &&
+                                    value.GetDocuments(document.DocumentName).ProposalNumber.Equals(document.ProposalNumber))
+                                {
+                                    //if (value.GetDocuments(document.DocumentName).FileSize.Equals(document.FileSize)) { }
+                                    Program.CleanLogNDisplay("Document Name: " + document.DocumentName + " Project Number_Name: " + document.ProposalNumber + "_" + document.ProposalName + "  #" + count);
+                                }
+                                else
+                                {
+                                    Program.LogNDisplay("Document Name: " + document.DocumentName + "for Project Number_Name: " + document.ProposalNumber + "_" + document.ProposalName +
+                                        " is not in the dictionary. " + "Review Projects extract in line #" + row);
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Program.LogNDisplay("Document Name: " + document.DocumentName + "for Project Number_Name: " + document.ProposalNumber + "_" + document.ProposalNumber +
+                                       " is not in the dictionary. " + "Review Projects extract in line #" + row);
+                        }
+
+                    }
+                    else
+                    {
+                        Program.LogNDisplay(" Project Number_Name not found: " + document.ProposalNumber + "_" + document.ProposalNumber + " not found for Document Name: " + document.DocumentName + "  #" + count);
+                    }
+                }
+                else
+                {
+                    Program.LogNDisplay("Document in row #" + row + " did not have a project number");
+                }
+                count++;
+                row++;
+            }
         }
 
         public static void ReleaseObject(object obj)
