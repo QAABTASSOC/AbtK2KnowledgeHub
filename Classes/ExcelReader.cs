@@ -532,7 +532,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
             while ((string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value != null)
             {
                 RepCapDocuments repcap = new RepCapDocuments();
-                if ((string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value != null)
+                if ((string)(excelWorksheet.Cells[row, 11] as Excel.Range).Value != null)
                 {
 
                     string proposalsNumber = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
@@ -541,7 +541,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                         //load row into memory
                         repcap.DocumentName = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
                         repcap.DocumentDate = (DateTime)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
-                        repcap.RepCapDocumentID = Convert.ToInt32((string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value);
+                        repcap.RepCapDocumentID = Convert.ToInt32((string)(excelWorksheet.Cells[row, 11] as Excel.Range).Value);
 
                     }
                     catch (Exception e)
@@ -576,9 +576,15 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                     {
                         Program.LogNDisplay("Error  RepCap Name: " + repcap.DocumentName + " RepCap ID: " + repcap.RepCapDocumentID + "  #" + count+"have been processed" );
                     }
-                    count++;
-                    row++;
-                }               
+                  
+                }
+                else
+                {
+                    Program.LogNDisplay("Error for RepCap file in row #" + row + " does not have RepCap ID asociated");
+                }
+
+                count++;
+                row++;
             }
         }
 

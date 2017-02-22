@@ -39,21 +39,22 @@ namespace AbtK2KnowledgeHub_OneTime
                     return;
                 }
                 //Projects
-               // program.ReadProjectsFromSQL();
-               // program.ReadProjectDescriptionFromSQL();
-                //program.ReadProjectDocumentsFromSQL();
+                program.ReadProjectsFromSQL();
+                program.ReadProjectDescriptionFromSQL();
+                program.ReadProjectDocumentsFromSQL();
 
                 //sharepoint extract
-               // ExcelReader.ReadConfig("Projects");
-               // ExcelReader.ReadConfig("Descriptions");
-              //  ExcelReader.ReadConfig("Documents");
+                ExcelReader.ReadConfig("Projects");
+                ExcelReader.ReadConfig("Descriptions");
+                ExcelReader.ReadConfig("Documents");
 
                 //Proposals
-               // program.ReadProposalsFromSQL();
-               // program.ReadProposalDocumentsFromSQL();
+                program.ReadProposalsFromSQL();
+                program.ReadProposalDocumentsFromSQL();
+
                 //sharedpoint extract
-               // ExcelReader.ReadConfig("Proposals");
-              //  ExcelReader.ReadConfig("ProposalsDocuments");
+                ExcelReader.ReadConfig("Proposals");
+                ExcelReader.ReadConfig("ProposalsDocuments");
 
                 //RepCap
                 program.ReadRepcapDocuments();
@@ -486,8 +487,6 @@ namespace AbtK2KnowledgeHub_OneTime
                                 {
                                 RepCapDocuments repcap = new RepCapDocuments();
                                 repcap.RepCapDocumentID = Helper.SafeGetInt32(reader, "pub_id");
-
-
                                 repcap.DocumentName = Helper.SafeGetString(reader, "uploadedfilename");
                                 repcap.Description =  Helper.SafeGetString(reader, "description");
 
