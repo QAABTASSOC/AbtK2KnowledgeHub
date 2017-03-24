@@ -39,28 +39,28 @@ namespace AbtK2KnowledgeHub_OneTime
                     return;
                 }
                 //Projects
-                program.ReadProjectsFromSQL();
-                program.ReadProjectDescriptionFromSQL();
-                program.ReadProjectDocumentsFromSQL();
+               program.ReadProjectsFromSQL();
+ //               program.ReadProjectDescriptionFromSQL();
+ //               program.ReadProjectDocumentsFromSQL();
 
                 //sharepoint extract
-                ExcelReader.ReadConfig("Projects");
-                ExcelReader.ReadConfig("Descriptions");
-                ExcelReader.ReadConfig("Documents");
+//                ExcelReader.ReadConfig("Projects");
+//                ExcelReader.ReadConfig("Descriptions");
+ //               ExcelReader.ReadConfig("Documents");
 
                 //Proposals
                 program.ReadProposalsFromSQL();
-                program.ReadProposalDocumentsFromSQL();
+//                program.ReadProposalDocumentsFromSQL();
 
                 //sharedpoint extract
-                ExcelReader.ReadConfig("Proposals");
-                ExcelReader.ReadConfig("ProposalsDocuments");
+               ExcelReader.ReadConfig("Proposals");
+//                ExcelReader.ReadConfig("ProposalsDocuments");
 
                 //RepCap
-                program.ReadRepcapDocuments();
+       //         program.ReadRepcapDocuments();
 
                 //sharedpoint extract
-                ExcelReader.ReadConfig("RepCapDocuments");
+       //         ExcelReader.ReadConfig("RepCapDocuments");
 
                 Console.WriteLine("Validation is complete. Press any key to exit.");
                 Console.ReadKey();
@@ -77,7 +77,7 @@ namespace AbtK2KnowledgeHub_OneTime
             int countr = 0;
             Console.WriteLine("Begin Reading Projects from the SQL \n");
 
-            using (SqlConnection sqlConnetion = new SqlConnection("Data Source = 10.221.100.52; Initial Catalog = abtknowledge; User ID = abtknowledge; Password = 2SxBZD3er63C; persist security info=True;"))
+            using (SqlConnection sqlConnetion = new SqlConnection(Helper.GetConnectionString(Constants.ConnectionStringKey)))
             {
                 string queryStatement =  "SELECT* FROM " + Helper.GetAppSettingValue(Constants.ProjectViewKey) ; 
                 using (SqlCommand command = new SqlCommand(queryStatement, sqlConnetion))
@@ -147,7 +147,8 @@ namespace AbtK2KnowledgeHub_OneTime
                         thisProject.MVTitle = Helper.SafeGetString(reader, "MVTitle");
                         thisProject.MMG = Helper.SafeGetString(reader, "MMG");
 
-                        string ProposalOracleNumber = Helper.SafeGetString(reader, "Proposalnumber");
+                        thisProject.OracleProposalNumber = Helper.SafeGetString(reader, "proposalnumberoracle");
+                        thisProject.AbtProposalNumber = Helper.SafeGetString(reader, "proposalnumberabtk");
                         string isGoodRef;
                         if (thisProject.IsGoodReference.HasValue)
                             isGoodRef = (bool)thisProject.IsGoodReference ? "Yes" : "No";
@@ -197,14 +198,18 @@ namespace AbtK2KnowledgeHub_OneTime
                                 ProjectDescription thisDescription = new ProjectDescription();
 
                                 string projectNumber = Helper.SafeGetString(reader, "ProjectNumber");
+                             
                                 thisDescription.ProjectNumber = projectNumber;
                                 thisDescription.Title = Helper.SafeGetString(reader, "Title");
                                 //unique id field in the view in sql
                                 thisDescription.DescriptionID = Helper.SafeGetInt64(reader, "OverviewID");
                                 thisDescription.ProjectsID = Helper.SafeGetInt32(reader, "DescriptionID");
                                 thisDescription.DescriptionType = Helper.SafeGetInt32(reader, "DescriptionType");
-
-
+                                if (thisDescription.DescriptionID == 972 || projectNumber.Equals("01026"))
+                                {
+                                   
+                                    CleanLogNDisplay("Project number:  " + projectNumber  + "Description id: " + thisDescription.DescriptionID);
+                                }
                                 //add to index map
                                 if (ProjectsFromDB.ContainsKey(projectNumber))
                                 {
@@ -307,7 +312,6 @@ namespace AbtK2KnowledgeHub_OneTime
                         }
                     }
             }
-
         public void ReadProposalsFromSQL()
         {
             int countr = 0;
@@ -466,7 +470,6 @@ namespace AbtK2KnowledgeHub_OneTime
                         }
                     }
                 }
-
         public void ReadRepcapDocuments()
         {
             Console.WriteLine("Begin reading RepCap documents");

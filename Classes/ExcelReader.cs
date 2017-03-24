@@ -14,39 +14,80 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         private static Excel.Worksheet excelWorksheet;
 
         public static Dictionary<string, Projects> ExcelProjectsDictionary = new Dictionary<string, Projects>();
+        public static Dictionary<int, string> ProposalsProjectNumberDictionary = new Dictionary<int, string>();
+        public static List<String> CleanProposalsProjectNumber(String cell)
+        {
+            // regular expression to split the data into an array, we need the ExplictCapture
+            // to prevent c# capturing the ;#
+            var regex = new Regex(@"((?<=\d);#|;#(?=\d))", RegexOptions.ExplicitCapture);
 
+            // our array of data that has been processed.
+            return new List<string>(regex.Split(cell));
+        }
+
+        public static Dictionary<int, string> getValidProjects(String[] productsCellsArray) {
+
+            Dictionary<int, string> productsDictionary = new Dictionary<int, string>();
+
+            if (productsCellsArray.Length % 2 == 1)
+            {
+                // handle badly formatted string the array length should always be an even number.
+            }
+
+            // set local variables to hold the data in the loop.
+            int productKey = -1;
+            string productValue = string.Empty;
+
+            // loop over the array and create our dictionary.
+            for (var i = 0; i < productsCellsArray.Length; i++)
+            {
+                var item = productsCellsArray[i];
+                // process odd/even
+                switch (i % 2)
+                {
+                    case 0:
+                        productKey = Int32.Parse(item);
+                        break;
+                    case 1:
+                        productValue = item;
+                        if (productKey > 0)
+                        {
+                            productsDictionary.Add(productKey, productValue);
+                            productKey = -1;
+                            productValue = string.Empty;
+                        }
+                        break;
+                }
+            }
+
+            return productsDictionary;
+        }
         public static int ReadConfig(String type)
         {
             excelApp = new Excel.Application();
-
+            excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\project_update.xlsx", true, true);
             try
             {   //TO USE EXCEL: PUT THE PATH IN THE LINE BELOW
                 switch (type)
                 {
                     case "RepCapDocuments":
-                        excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\RepCap.xlsx", true, true);
                         excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("RepCapDocuments");
                         break;
 
                     case "Proposals":
-                        excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\Proposals.xlsx", true, true);
                         excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("Proposals");
                         break;
 
                     case "ProposalsDocuments":
-                        excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\Proposals.xlsx", true, true);
                         excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("ProposalsDocuments");
                         break;
                     case "Projects":
-                        excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\Projects.xlsx", true, true);
                         excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("Projects");
                         break;
                     case "Descriptions":
-                        excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\Projects.xlsx", true, true);
-                        excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("ProjectDescriptions");
+                        excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("descriptions");
                         break;
                     case "Documents":
-                        excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\Projects.xlsx", true, true);
                         excelWorksheet = (Excel.Worksheet)excelWorkbook.Worksheets.get_Item("ProjectDocuments");
                         break;
 
@@ -157,10 +198,11 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                     project.MMG = (string)(excelWorksheet.Cells[row, 30] as Excel.Range).Value;
                     project.InstClient = (string)(excelWorksheet.Cells[row, 31] as Excel.Range).Value;
                     project.MVTitle = (string)(excelWorksheet.Cells[row, 32] as Excel.Range).Value;
-                    project.OracleProposalNumber =(string)(excelWorksheet.Cells[row, 33] as Excel.Range).Value;
+                   
+                    project.OracleProposalNumber = Convert.ToString((excelWorksheet.Cells[row, 37] as Excel.Range).Value);
                     //ABTKID = Project ID
-                    project.ProjectsID = (int?)(excelWorksheet.Cells[row, 35] as Excel.Range).Value;
-                    project.ProposalName = (string)(excelWorksheet.Cells[row, 34] as Excel.Range).Value;
+                   // project.ProjectsID = (int?)(excelWorksheet.Cells[row, 35] as Excel.Range).Value;
+                    project.ProposalName = Convert.ToString((excelWorksheet.Cells[row, 36] as Excel.Range).Value);
 
                 }
                 catch (Exception e)
@@ -173,8 +215,28 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                 {
                     Projects value = Program.ProjectsFromDB[projectNumber];
                     if (project.ProjectNumber.Equals(value.ProjectNumber))
-                    {
+                    {   
                         Program.CleanLogNDisplay("Project: " + value.ProjectNumber + " AbtName: " + value.ProjectName + "  #" + count);
+                        if(project.OracleProposalNumber != null && project.OracleProposalNumber.Length > 2)
+                        {
+                            if (project.OracleProposalNumber.Equals(value.AbtProposalNumber))
+                            {
+                                Program.CleanLogNDisplay("OracleProposal number" + value.AbtProposalNumber + " in Project: " + value.ProjectName + "  #" + count + "\n");
+                            }
+                            else if (project.OracleProposalNumber.Equals(value.OracleProposalNumber))
+                            {
+                                Program.CleanLogNDisplay("ABTProposal number" + value.AbtProposalNumber + " in Project: " + value.ProjectName + "  #" + count + "\n");
+                            }
+                            else
+                            {
+                                Program.CleanLogNDisplay("Unknown Value: " + value.ProjectName+"  :  "+ project.OracleProposalNumber + "  #" + count + "\n");
+                            }
+                        }
+                        else
+                        {
+                            Program.CleanLogNDisplay("No Proposals in Project: " + value.ProjectName + "  #" + count + "\n");
+                        }
+                    
                     }
                 }
                 else
@@ -254,7 +316,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
                         }
                     }catch (Exception e)
                     {
-                        Program.LogNDisplay("Project Description: " + description.DescriptionID + "_" + description.Title + " #" + count + " is not in the dictionary." +
+                        Program.LogNDisplay("Project Description: " + description.DescriptionID + "_" + description.Title + " #" + count + " is not in the dictionary. " +
                                                         "Project Number_Name " + projectNumber + "_" + description.ProjectName + "ProjectDescription extract line #" + row);
                     }
                 }
@@ -370,66 +432,124 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
             while ((string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value != null)
             {
                 Proposals proposal = new Proposals();
+                List<String> projectNumbers = new List<String>();
+                if (((string)(excelWorksheet.Cells[row, 32] as Excel.Range).Value) != null &&
+                   ((string)(excelWorksheet.Cells[row, 32] as Excel.Range).Value) != "")
+                {
+                    projectNumbers = CleanProposalsProjectNumber((string)(excelWorksheet.Cells[row, 32] as Excel.Range).Value);
+
+                }
+                
                 string proposalNumber = (string)(excelWorksheet.Cells[row, 1] as Excel.Range).Value;
-               // int proposalID = (int)(excelWorksheet.Cells[row, 26] as Excel.Range).Value;
+                // int proposalID = (int)(excelWorksheet.Cells[row, 26] as Excel.Range).Value;
                 try
                 {
                     //load row into memory
                     proposal.ProposalNumber = proposalNumber;
                     proposal.ProposalTitle = (string)(excelWorksheet.Cells[row, 3] as Excel.Range).Value;
                     proposal.ProposalName = (string)(excelWorksheet.Cells[row, 2] as Excel.Range).Value;
-                    proposal.Comments = (string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value;
-                    proposal.Summary = (string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value;
-                    proposal.Client = (string)(excelWorksheet.Cells[row, 6] as Excel.Range).Value;
-                    proposal.IsPrime = (bool)(excelWorksheet.Cells[row, 7] as Excel.Range).Value;
-                    proposal.UltimateClient = (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
-                    proposal.RFPNumber = (string)(excelWorksheet.Cells[row, 10] as Excel.Range).Value;
-                    proposal.ProjectNumber = (string)(excelWorksheet.Cells[row, 17] as Excel.Range).Value; //17 project oracle number & 19 project number
-                    proposal.ProjectName = (string)(excelWorksheet.Cells[row, 18] as Excel.Range).Value;
-                    proposal.Division = (string)(excelWorksheet.Cells[row, 20] as Excel.Range).Value;
-                    proposal.Practice = (string)(excelWorksheet.Cells[row, 21] as Excel.Range).Value;
-                    proposal.ProposalManager = (string)(excelWorksheet.Cells[row, 22] as Excel.Range).Value;
-                   // proposal.ProposalID = proposalID;
+                 //   proposal.Comments = (string)(excelWorksheet.Cells[row, 4] as Excel.Range).Value;
+                 //   proposal.Summary = (string)(excelWorksheet.Cells[row, 5] as Excel.Range).Value;
+                 //   proposal.Client = (string)(excelWorksheet.Cells[row, 6] as Excel.Range).Value;
+                    // proposal.IsPrime = (bool)(excelWorksheet.Cells[row, 7] as Excel.Range).Value;
+                  //  proposal.UltimateClient = (string)(excelWorksheet.Cells[row, 8] as Excel.Range).Value;
+                //    proposal.RFPNumber = (string)(excelWorksheet.Cells[row, 10] as Excel.Range).Value;
+                   // proposal.ProjectNumber = (string)(excelWorksheet.Cells[row, 32] as Excel.Range).Value; //17 project oracle number & 19 project number
+                    proposal.ProjectName = (string)(excelWorksheet.Cells[row, 30] as Excel.Range).Value;
+                 //   proposal.Division = (string)(excelWorksheet.Cells[row, 20] as Excel.Range).Value;
+                 //   proposal.Practice = (string)(excelWorksheet.Cells[row, 21] as Excel.Range).Value;
+                    //proposal.ProposalManager = (string)(excelWorksheet.Cells[row, 22] as Excel.Range).Value;
+                    // proposal.ProposalID = proposalID;
                     //if (((string)(excelWorksheet.Cells[row, 31] as Excel.Range).Value).ToUpper().Equals("YES"))
                     //    proposal.IsActive = true;
                     //else
                     //    proposal.IsActive = false;
 
 
-                   // proposal.FederalAgency = (string)(excelWorksheet.Cells[row, 33] as Excel.Range).Value;
-                   // proposal.MMG = (string)(excelWorksheet.Cells[row, 34] as Excel.Range).Value;
+                    // proposal.FederalAgency = (string)(excelWorksheet.Cells[row, 33] as Excel.Range).Value;
+                    // proposal.MMG = (string)(excelWorksheet.Cells[row, 34] as Excel.Range).Value;
 
                 }
                 catch (Exception e)
                 {
-                    Program.LogNDisplay("Failed to read Excel. Projects line #" + row + "\n Message: " + e.Message);
+                    Program.LogNDisplay("Failed to read Excel. Projects line #" + row + "\n Message: " + e.Message + "\n");
                 }
 
                 //reconcile against the DB
-                if (Program.ProposalsFromDB.ContainsKey(proposal.ProposalNumber))
+                if (!String.IsNullOrEmpty(proposal.ProposalName) &&
+                    !String.IsNullOrEmpty(proposal.ProposalNumber) && 
+                    Program.ProposalsFromDB.ContainsKey(proposal.ProposalNumber))
                 {
                     Proposals value = Program.ProposalsFromDB[proposal.ProposalNumber];
-                    if (!value.ProposalName.Equals("") && value.ProposalName != null)
+                    if (!proposal.ProposalName.Equals("")  && proposal.ProposalName != null
+                         && !value.ProposalName.Equals("") && value.ProposalName != null)
                     {
                         if (proposal.ProposalNumber.Equals(value.ProposalNumber) &&
                             proposal.ProposalName.Equals(value.ProposalName))
                         {
                             Program.CleanLogNDisplay("Proposal: " + proposal.ProposalNumber + " Proposal Name: " + value.ProposalName + "  #" + count);
+                            // if(proposal.ProjectNumber)
+
+                            if (projectNumbers.Count > 0)
+                            {
+                                try
+                                {
+                                    for (int item = 0; item < projectNumbers.Count; item++)
+                                    {
+                                        if (item % 2 == 1)
+                                        {
+                                            // handle badly formatted string the array length should always be an even number.
+                                        }
+                                        else
+                                        {
+                                            if (Program.ProjectsFromDB[projectNumbers[item]].AbtProposalNumber != null &&
+                                                Program.ProjectsFromDB[projectNumbers[item]].AbtProposalNumber.Equals(value.ProposalNumber)) {
+                                                Program.CleanLogNDisplay("PropABT: " + proposal.ProposalNumber + "_" + proposal.ProposalName+
+                                                   " Project: " + Program.ProjectsFromDB[projectNumbers[item]].ProjectNumber + "_" + Program.ProjectsFromDB[projectNumbers[item]].ProjectName);
+                                            }
+                                            if (Program.ProjectsFromDB[projectNumbers[item]].OracleProposalNumber != null &&
+                                                Program.ProjectsFromDB[projectNumbers[item]].OracleProposalNumber.Equals(value.ProposalNumber))
+                                            {
+                                                Program.CleanLogNDisplay("PropOracle: "+ proposal.ProposalNumber +
+                                                    " Project: " + Program.ProjectsFromDB[projectNumbers[item]].OracleProposalNumber + "_"+ Program.ProjectsFromDB[projectNumbers[item]].ProjectName);
+                                            }
+                                            else if(projectNumbers[item].Contains("-"))
+                                            {
+                                                Program.CleanLogNDisplay("PropENR : " + proposal.ProposalNumber +"_"+ value.ProposalName + " attached to " +
+                                                    Program.ProjectsFromDB[projectNumbers[item]].ProjectNumber + "_"+ Program.ProjectsFromDB[projectNumbers[item]].ProjectName);
+                                            }
+                                            else { 
+                                                Program.CleanLogNDisplay("PropFailed : " + proposal.ProposalNumber + "_" + proposal.ProjectName +
+                                                    " is not attached to " + Program.ProjectsFromDB[projectNumbers[item]].ProjectName);
+                                            }
+                                        }
+                                    }
+
+                                }
+                                catch (Exception e)
+                                {
+                                    Program.LogNDisplay("PropEXception: " + value.ProposalName + e.Message + "\n");
+                                }
+
+
+                            }
+                            else
+                            {
+                                Program.CleanLogNDisplay("PropWithOutProject: " + proposal.ProposalNumber +"_"+ proposal.ProposalName +" #" + row );
+                            }
                         }
-                    }else{
-                        Program.LogNDisplay("Proposal: " + proposal.ProposalNumber + "does not have a Proposal Name Associated  #" + row);
+                        else
+                        {
+
+                            Program.LogNDisplay("Key: " + proposalNumber + " #" + count + " is not in the dictionary." +
+                                "Projects extract line #" + row +"\n");
+                        }
+                        count++;
+                        row++;
                     }
-                }
-                else
-                {
 
-                    Program.LogNDisplay("Key: " + proposalNumber + " #" + count + " is not in the dictionary." +
-                        "Projects extract line #" + row);
                 }
-                count++;
-                row++;
             }
-
         }
         public static void LoadSharePointProposalDocumentsExtract()
         {

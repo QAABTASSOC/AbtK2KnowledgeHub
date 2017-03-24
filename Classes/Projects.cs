@@ -257,7 +257,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         public decimal? AwardAmount{ get; set; }
         public decimal? FundedAmount { get; set; }
         public string OracleProposalNumber { get; set; }
-
+        public string AbtProposalNumber { get; set; }
         public string ProposalName { get; set; }
     }
 }
