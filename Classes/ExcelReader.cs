@@ -65,7 +65,7 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
         public static int ReadConfig(String type)
         {
             excelApp = new Excel.Application();
-            excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_MIGRATION\\project_update.xlsx", true, true);
+            excelWorkbook = excelApp.Workbooks.Open("C:\\Users\\frometaguerraj\\Desktop\\KH_Update\\project_update_3.xlsx", true, true);
             try
             {   //TO USE EXCEL: PUT THE PATH IN THE LINE BELOW
                 switch (type)
@@ -433,10 +433,10 @@ namespace AbtK2KnowledgeHub_OneTime.Classes
             {
                 Proposals proposal = new Proposals();
                 List<String> projectNumbers = new List<String>();
-                if (((string)(excelWorksheet.Cells[row, 32] as Excel.Range).Value) != null &&
-                   ((string)(excelWorksheet.Cells[row, 32] as Excel.Range).Value) != "")
+                if (((string)(excelWorksheet.Cells[row, 31] as Excel.Range).Value) != null &&
+                   ((string)(excelWorksheet.Cells[row, 31] as Excel.Range).Value) != "")
                 {
-                    projectNumbers = CleanProposalsProjectNumber((string)(excelWorksheet.Cells[row, 32] as Excel.Range).Value);
+                    projectNumbers = CleanProposalsProjectNumber((string)(excelWorksheet.Cells[row, 31] as Excel.Range).Value);
 
                 }
                 

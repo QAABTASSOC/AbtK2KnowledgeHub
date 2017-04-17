@@ -17,7 +17,7 @@ namespace AbtK2KnowledgeHub_OneTime
 
         //path for the logs to be written
         private static string logPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-                                 + @"\KH_MIGRATION\";
+                                 + @"\KH_Update\";
 
         //contains all of the valid formats for the test
         public static HashSet<string> extensions = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
@@ -39,22 +39,22 @@ namespace AbtK2KnowledgeHub_OneTime
                     return;
                 }
                 //Projects
-               program.ReadProjectsFromSQL();
- //               program.ReadProjectDescriptionFromSQL();
- //               program.ReadProjectDocumentsFromSQL();
+                program.ReadProjectsFromSQL();
+   //             program.ReadProjectDescriptionFromSQL();
+    //            program.ReadProjectDocumentsFromSQL();
 
                 //sharepoint extract
-//                ExcelReader.ReadConfig("Projects");
-//                ExcelReader.ReadConfig("Descriptions");
- //               ExcelReader.ReadConfig("Documents");
+                ExcelReader.ReadConfig("Projects");
+    //            ExcelReader.ReadConfig("Descriptions");
+   //             ExcelReader.ReadConfig("Documents");
 
                 //Proposals
                 program.ReadProposalsFromSQL();
-//                program.ReadProposalDocumentsFromSQL();
+      //          program.ReadProposalDocumentsFromSQL();
 
                 //sharedpoint extract
                ExcelReader.ReadConfig("Proposals");
-//                ExcelReader.ReadConfig("ProposalsDocuments");
+    //            ExcelReader.ReadConfig("ProposalsDocuments");
 
                 //RepCap
        //         program.ReadRepcapDocuments();
@@ -530,11 +530,11 @@ namespace AbtK2KnowledgeHub_OneTime
 
         public static void LogNDisplay(string action, long elapsedTipe)
         {
-            using (StreamWriter w = System.IO.File.AppendText(logPath + "ABTKMigration.txt"))
+            using (StreamWriter w = System.IO.File.AppendText(logPath + "KH_Automatic_Update.txt"))
             {
                 Log(action + ": " + TimeSpan.FromMilliseconds(elapsedTipe).ToString(), w);
             }
-            using (StreamReader r = System.IO.File.OpenText(logPath + "ABTKMigration.txt"))
+            using (StreamReader r = System.IO.File.OpenText(logPath + "KH_Automatic_Update.txt"))
             {
                 DumpLog(r);
             }
@@ -545,7 +545,7 @@ namespace AbtK2KnowledgeHub_OneTime
         /// <param name="action">action to be logged i.e (Move, Delete, Crete, etc..)</param>
         public static void LogNDisplay(string action)
         {
-            using (StreamWriter w = System.IO.File.AppendText(logPath + "ABTKMigration.txt"))
+            using (StreamWriter w = System.IO.File.AppendText(logPath + "KH_Automatic_Update.txt"))
             {
                 Log(action, w);
             }
@@ -556,7 +556,7 @@ namespace AbtK2KnowledgeHub_OneTime
         }
         public static void CleanLogNDisplay(string action)
         {
-            using (StreamWriter w = System.IO.File.AppendText(logPath + "ABTKMigration.txt"))
+            using (StreamWriter w = System.IO.File.AppendText(logPath + "KH_Automatic_Update.txt"))
             {
                 CleanLog(action, w);
             }
